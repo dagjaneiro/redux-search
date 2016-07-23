@@ -68,11 +68,11 @@ module.exports =
 	
 	var _reduxSearch2 = _interopRequireDefault(_reduxSearch);
 	
-	var _reducer = __webpack_require__(19);
+	var _reducer = __webpack_require__(23);
 	
 	var _reducer2 = _interopRequireDefault(_reducer);
 	
-	var _SearchApi = __webpack_require__(17);
+	var _SearchApi = __webpack_require__(21);
 	
 	var _SearchApi2 = _interopRequireDefault(_SearchApi);
 	
@@ -330,11 +330,11 @@ module.exports =
 	
 	var _constants = __webpack_require__(4);
 	
-	var _searchMiddleware = __webpack_require__(16);
+	var _searchMiddleware = __webpack_require__(20);
 	
 	var _searchMiddleware2 = _interopRequireDefault(_searchMiddleware);
 	
-	var _SearchApi = __webpack_require__(17);
+	var _SearchApi = __webpack_require__(21);
 	
 	var _SearchApi2 = _interopRequireDefault(_SearchApi);
 	
@@ -402,7 +402,7 @@ module.exports =
 	
 	          store.subscribe(function () {
 	            var nextState = store.getState();
-	            var searchState = store[_constants.SEARCH_STATE_SELECTOR](nextState);
+	            // const searchState = store[SEARCH_STATE_SELECTOR](nextState)
 	
 	            for (var resourceName in resourceIndexes) {
 	              var resource = resourceSelector(resourceName, nextState);
@@ -412,7 +412,7 @@ module.exports =
 	                currentResources[resourceName] = resource;
 	
 	                var resourceIndex = resourceIndexes[resourceName];
-	                var searchString = searchState[resourceName].text;
+	                // const searchString = searchState[resourceName].text
 	
 	                store.dispatch(actions.indexResource({
 	                  fieldNamesOrIndexFunction: resourceIndex,
@@ -420,7 +420,7 @@ module.exports =
 	                  resources: resource,
 	                  state: nextState
 	                }));
-	                store.dispatch(actions.search(resourceName)(searchString));
+	                // store.dispatch(actions.search(resourceName)(searchString))
 	              }
 	            }
 	          });
@@ -438,392 +438,95 @@ module.exports =
 /* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
-	'use strict';
-	
-	exports.__esModule = true;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _createStore = __webpack_require__(7);
-	
-	var _createStore2 = _interopRequireDefault(_createStore);
-	
-	var _utilsCombineReducers = __webpack_require__(9);
-	
-	var _utilsCombineReducers2 = _interopRequireDefault(_utilsCombineReducers);
-	
-	var _utilsBindActionCreators = __webpack_require__(13);
-	
-	var _utilsBindActionCreators2 = _interopRequireDefault(_utilsBindActionCreators);
-	
-	var _utilsApplyMiddleware = __webpack_require__(14);
-	
-	var _utilsApplyMiddleware2 = _interopRequireDefault(_utilsApplyMiddleware);
-	
-	var _utilsCompose = __webpack_require__(15);
-	
-	var _utilsCompose2 = _interopRequireDefault(_utilsCompose);
-	
-	exports.createStore = _createStore2['default'];
-	exports.combineReducers = _utilsCombineReducers2['default'];
-	exports.bindActionCreators = _utilsBindActionCreators2['default'];
-	exports.applyMiddleware = _utilsApplyMiddleware2['default'];
-	exports.compose = _utilsCompose2['default'];
-
-/***/ },
-/* 7 */
-/***/ function(module, exports, __webpack_require__) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	exports['default'] = createStore;
-	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _utilsIsPlainObject = __webpack_require__(8);
-	
-	var _utilsIsPlainObject2 = _interopRequireDefault(_utilsIsPlainObject);
-	
-	/**
-	 * These are private action types reserved by Redux.
-	 * For any unknown actions, you must return the current state.
-	 * If the current state is undefined, you must return the initial state.
-	 * Do not reference these action types directly in your code.
-	 */
-	var ActionTypes = {
-	  INIT: '@@redux/INIT'
-	};
-	
-	exports.ActionTypes = ActionTypes;
-	/**
-	 * Creates a Redux store that holds the state tree.
-	 * The only way to change the data in the store is to call `dispatch()` on it.
-	 *
-	 * There should only be a single store in your app. To specify how different
-	 * parts of the state tree respond to actions, you may combine several reducers
-	 * into a single reducer function by using `combineReducers`.
-	 *
-	 * @param {Function} reducer A function that returns the next state tree, given
-	 * the current state tree and the action to handle.
-	 *
-	 * @param {any} [initialState] The initial state. You may optionally specify it
-	 * to hydrate the state from the server in universal apps, or to restore a
-	 * previously serialized user session.
-	 * If you use `combineReducers` to produce the root reducer function, this must be
-	 * an object with the same shape as `combineReducers` keys.
-	 *
-	 * @returns {Store} A Redux store that lets you read the state, dispatch actions
-	 * and subscribe to changes.
-	 */
-	
-	function createStore(reducer, initialState) {
-	  if (typeof reducer !== 'function') {
-	    throw new Error('Expected the reducer to be a function.');
-	  }
-	
-	  var currentReducer = reducer;
-	  var currentState = initialState;
-	  var listeners = [];
-	  var isDispatching = false;
-	
-	  /**
-	   * Reads the state tree managed by the store.
-	   *
-	   * @returns {any} The current state tree of your application.
-	   */
-	  function getState() {
-	    return currentState;
-	  }
-	
-	  /**
-	   * Adds a change listener. It will be called any time an action is dispatched,
-	   * and some part of the state tree may potentially have changed. You may then
-	   * call `getState()` to read the current state tree inside the callback.
-	   *
-	   * @param {Function} listener A callback to be invoked on every dispatch.
-	   * @returns {Function} A function to remove this change listener.
-	   */
-	  function subscribe(listener) {
-	    listeners.push(listener);
-	    var isSubscribed = true;
-	
-	    return function unsubscribe() {
-	      if (!isSubscribed) {
-	        return;
-	      }
-	
-	      isSubscribed = false;
-	      var index = listeners.indexOf(listener);
-	      listeners.splice(index, 1);
-	    };
-	  }
-	
-	  /**
-	   * Dispatches an action. It is the only way to trigger a state change.
-	   *
-	   * The `reducer` function, used to create the store, will be called with the
-	   * current state tree and the given `action`. Its return value will
-	   * be considered the **next** state of the tree, and the change listeners
-	   * will be notified.
-	   *
-	   * The base implementation only supports plain object actions. If you want to
-	   * dispatch a Promise, an Observable, a thunk, or something else, you need to
-	   * wrap your store creating function into the corresponding middleware. For
-	   * example, see the documentation for the `redux-thunk` package. Even the
-	   * middleware will eventually dispatch plain object actions using this method.
-	   *
-	   * @param {Object} action A plain object representing “what changed”. It is
-	   * a good idea to keep actions serializable so you can record and replay user
-	   * sessions, or use the time travelling `redux-devtools`. An action must have
-	   * a `type` property which may not be `undefined`. It is a good idea to use
-	   * string constants for action types.
-	   *
-	   * @returns {Object} For convenience, the same action object you dispatched.
-	   *
-	   * Note that, if you use a custom middleware, it may wrap `dispatch()` to
-	   * return something else (for example, a Promise you can await).
-	   */
-	  function dispatch(action) {
-	    if (!_utilsIsPlainObject2['default'](action)) {
-	      throw new Error('Actions must be plain objects. ' + 'Use custom middleware for async actions.');
-	    }
-	
-	    if (typeof action.type === 'undefined') {
-	      throw new Error('Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?');
-	    }
-	
-	    if (isDispatching) {
-	      throw new Error('Reducers may not dispatch actions.');
-	    }
-	
-	    try {
-	      isDispatching = true;
-	      currentState = currentReducer(currentState, action);
-	    } finally {
-	      isDispatching = false;
-	    }
-	
-	    listeners.slice().forEach(function (listener) {
-	      return listener();
-	    });
-	    return action;
-	  }
-	
-	  /**
-	   * Replaces the reducer currently used by the store to calculate the state.
-	   *
-	   * You might need this if your app implements code splitting and you want to
-	   * load some of the reducers dynamically. You might also need this if you
-	   * implement a hot reloading mechanism for Redux.
-	   *
-	   * @param {Function} nextReducer The reducer for the store to use instead.
-	   * @returns {void}
-	   */
-	  function replaceReducer(nextReducer) {
-	    currentReducer = nextReducer;
-	    dispatch({ type: ActionTypes.INIT });
-	  }
-	
-	  // When a store is created, an "INIT" action is dispatched so that every
-	  // reducer returns their initial state. This effectively populates
-	  // the initial state tree.
-	  dispatch({ type: ActionTypes.INIT });
-	
-	  return {
-	    dispatch: dispatch,
-	    subscribe: subscribe,
-	    getState: getState,
-	    replaceReducer: replaceReducer
-	  };
-	}
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	'use strict';
-	
-	exports.__esModule = true;
-	exports['default'] = isPlainObject;
-	var fnToString = function fnToString(fn) {
-	  return Function.prototype.toString.call(fn);
-	};
-	var objStringValue = fnToString(Object);
-	
-	/**
-	 * @param {any} obj The object to inspect.
-	 * @returns {boolean} True if the argument appears to be a plain object.
-	 */
-	
-	function isPlainObject(obj) {
-	  if (!obj || typeof obj !== 'object') {
-	    return false;
-	  }
-	
-	  var proto = typeof obj.constructor === 'function' ? Object.getPrototypeOf(obj) : Object.prototype;
-	
-	  if (proto === null) {
-	    return true;
-	  }
-	
-	  var constructor = proto.constructor;
-	
-	  return typeof constructor === 'function' && constructor instanceof constructor && fnToString(constructor) === objStringValue;
-	}
-	
-	module.exports = exports['default'];
-
-/***/ },
-/* 9 */
-/***/ function(module, exports, __webpack_require__) {
-
 	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
 	
 	exports.__esModule = true;
-	exports['default'] = combineReducers;
+	exports.compose = exports.applyMiddleware = exports.bindActionCreators = exports.combineReducers = exports.createStore = undefined;
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+	var _createStore = __webpack_require__(8);
 	
-	var _createStore = __webpack_require__(7);
+	var _createStore2 = _interopRequireDefault(_createStore);
 	
-	var _isPlainObject = __webpack_require__(8);
+	var _combineReducers = __webpack_require__(15);
 	
-	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+	var _combineReducers2 = _interopRequireDefault(_combineReducers);
 	
-	var _mapValues = __webpack_require__(11);
+	var _bindActionCreators = __webpack_require__(17);
 	
-	var _mapValues2 = _interopRequireDefault(_mapValues);
+	var _bindActionCreators2 = _interopRequireDefault(_bindActionCreators);
 	
-	var _pick = __webpack_require__(12);
+	var _applyMiddleware = __webpack_require__(18);
 	
-	var _pick2 = _interopRequireDefault(_pick);
+	var _applyMiddleware2 = _interopRequireDefault(_applyMiddleware);
 	
-	/* eslint-disable no-console */
+	var _compose = __webpack_require__(19);
 	
-	function getUndefinedStateErrorMessage(key, action) {
-	  var actionType = action && action.type;
-	  var actionName = actionType && '"' + actionType.toString() + '"' || 'an action';
+	var _compose2 = _interopRequireDefault(_compose);
 	
-	  return 'Reducer "' + key + '" returned undefined handling ' + actionName + '. ' + 'To ignore an action, you must explicitly return the previous state.';
+	var _warning = __webpack_require__(16);
+	
+	var _warning2 = _interopRequireDefault(_warning);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	
+	/*
+	* This is a dummy function to check if the function name has been altered by minification.
+	* If the function has been minified and NODE_ENV !== 'production', warn the user.
+	*/
+	function isCrushed() {}
+	
+	if (process.env.NODE_ENV !== 'production' && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
+	  (0, _warning2["default"])('You are currently using minified code outside of NODE_ENV === \'production\'. ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or DefinePlugin for webpack (http://stackoverflow.com/questions/30030031) ' + 'to ensure you have the correct code for your production build.');
 	}
 	
-	function getUnexpectedStateKeyWarningMessage(inputState, outputState, action) {
-	  var reducerKeys = Object.keys(outputState);
-	  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'initialState argument passed to createStore' : 'previous state received by the reducer';
-	
-	  if (reducerKeys.length === 0) {
-	    return 'Store does not have a valid reducer. Make sure the argument passed ' + 'to combineReducers is an object whose values are reducers.';
-	  }
-	
-	  if (!_isPlainObject2['default'](inputState)) {
-	    return 'The ' + argumentName + ' has unexpected type of "' + ({}).toString.call(inputState).match(/\s([a-z|A-Z]+)/)[1] + '". Expected argument to be an object with the following ' + ('keys: "' + reducerKeys.join('", "') + '"');
-	  }
-	
-	  var unexpectedKeys = Object.keys(inputState).filter(function (key) {
-	    return reducerKeys.indexOf(key) < 0;
-	  });
-	
-	  if (unexpectedKeys.length > 0) {
-	    return 'Unexpected ' + (unexpectedKeys.length > 1 ? 'keys' : 'key') + ' ' + ('"' + unexpectedKeys.join('", "') + '" found in ' + argumentName + '. ') + 'Expected to find one of the known reducer keys instead: ' + ('"' + reducerKeys.join('", "') + '". Unexpected keys will be ignored.');
-	  }
-	}
-	
-	function assertReducerSanity(reducers) {
-	  Object.keys(reducers).forEach(function (key) {
-	    var reducer = reducers[key];
-	    var initialState = reducer(undefined, { type: _createStore.ActionTypes.INIT });
-	
-	    if (typeof initialState === 'undefined') {
-	      throw new Error('Reducer "' + key + '" returned undefined during initialization. ' + 'If the state passed to the reducer is undefined, you must ' + 'explicitly return the initial state. The initial state may ' + 'not be undefined.');
-	    }
-	
-	    var type = '@@redux/PROBE_UNKNOWN_ACTION_' + Math.random().toString(36).substring(7).split('').join('.');
-	    if (typeof reducer(undefined, { type: type }) === 'undefined') {
-	      throw new Error('Reducer "' + key + '" returned undefined when probed with a random type. ' + ('Don\'t try to handle ' + _createStore.ActionTypes.INIT + ' or other actions in "redux/*" ') + 'namespace. They are considered private. Instead, you must return the ' + 'current state for any unknown actions, unless it is undefined, ' + 'in which case you must return the initial state, regardless of the ' + 'action type. The initial state may not be undefined.');
-	    }
-	  });
-	}
-	
-	/**
-	 * Turns an object whose values are different reducer functions, into a single
-	 * reducer function. It will call every child reducer, and gather their results
-	 * into a single state object, whose keys correspond to the keys of the passed
-	 * reducer functions.
-	 *
-	 * @param {Object} reducers An object whose values correspond to different
-	 * reducer functions that need to be combined into one. One handy way to obtain
-	 * it is to use ES6 `import * as reducers` syntax. The reducers may never return
-	 * undefined for any action. Instead, they should return their initial state
-	 * if the state passed to them was undefined, and the current state for any
-	 * unrecognized action.
-	 *
-	 * @returns {Function} A reducer function that invokes every reducer inside the
-	 * passed object, and builds a state object with the same shape.
-	 */
-	
-	function combineReducers(reducers) {
-	  var finalReducers = _pick2['default'](reducers, function (val) {
-	    return typeof val === 'function';
-	  });
-	  var sanityError;
-	
-	  try {
-	    assertReducerSanity(finalReducers);
-	  } catch (e) {
-	    sanityError = e;
-	  }
-	
-	  var defaultState = _mapValues2['default'](finalReducers, function () {
-	    return undefined;
-	  });
-	
-	  return function combination(state, action) {
-	    if (state === undefined) state = defaultState;
-	
-	    if (sanityError) {
-	      throw sanityError;
-	    }
-	
-	    var hasChanged = false;
-	    var finalState = _mapValues2['default'](finalReducers, function (reducer, key) {
-	      var previousStateForKey = state[key];
-	      var nextStateForKey = reducer(previousStateForKey, action);
-	      if (typeof nextStateForKey === 'undefined') {
-	        var errorMessage = getUndefinedStateErrorMessage(key, action);
-	        throw new Error(errorMessage);
-	      }
-	      hasChanged = hasChanged || nextStateForKey !== previousStateForKey;
-	      return nextStateForKey;
-	    });
-	
-	    if (process.env.NODE_ENV !== 'production') {
-	      var warningMessage = getUnexpectedStateKeyWarningMessage(state, finalState, action);
-	      if (warningMessage) {
-	        console.error(warningMessage);
-	      }
-	    }
-	
-	    return hasChanged ? finalState : state;
-	  };
-	}
-	
-	module.exports = exports['default'];
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(10)))
+	exports.createStore = _createStore2["default"];
+	exports.combineReducers = _combineReducers2["default"];
+	exports.bindActionCreators = _bindActionCreators2["default"];
+	exports.applyMiddleware = _applyMiddleware2["default"];
+	exports.compose = _compose2["default"];
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
 
 /***/ },
-/* 10 */
+/* 7 */
 /***/ function(module, exports) {
 
 	// shim for using process in browser
 	
 	var process = module.exports = {};
+	
+	// cached from whatever global is present so that test runners that stub it
+	// don't break things.  But we need to wrap it in a try catch in case it is
+	// wrapped in strict mode code which doesn't define any globals.  It's inside a
+	// function because try/catches deoptimize in certain engines.
+	
+	var cachedSetTimeout;
+	var cachedClearTimeout;
+	
+	(function () {
+	  try {
+	    cachedSetTimeout = setTimeout;
+	  } catch (e) {
+	    cachedSetTimeout = function () {
+	      throw new Error('setTimeout is not defined');
+	    }
+	  }
+	  try {
+	    cachedClearTimeout = clearTimeout;
+	  } catch (e) {
+	    cachedClearTimeout = function () {
+	      throw new Error('clearTimeout is not defined');
+	    }
+	  }
+	} ())
 	var queue = [];
 	var draining = false;
 	var currentQueue;
 	var queueIndex = -1;
 	
 	function cleanUpNextTick() {
+	    if (!draining || !currentQueue) {
+	        return;
+	    }
 	    draining = false;
 	    if (currentQueue.length) {
 	        queue = currentQueue.concat(queue);
@@ -839,7 +542,7 @@ module.exports =
 	    if (draining) {
 	        return;
 	    }
-	    var timeout = setTimeout(cleanUpNextTick);
+	    var timeout = cachedSetTimeout(cleanUpNextTick);
 	    draining = true;
 	
 	    var len = queue.length;
@@ -856,7 +559,7 @@ module.exports =
 	    }
 	    currentQueue = null;
 	    draining = false;
-	    clearTimeout(timeout);
+	    cachedClearTimeout(timeout);
 	}
 	
 	process.nextTick = function (fun) {
@@ -868,7 +571,7 @@ module.exports =
 	    }
 	    queue.push(new Item(fun, args));
 	    if (queue.length === 1 && !draining) {
-	        setTimeout(drainQueue, 0);
+	        cachedSetTimeout(drainQueue, 0);
 	    }
 	};
 	
@@ -909,72 +612,637 @@ module.exports =
 
 
 /***/ },
+/* 8 */
+/***/ function(module, exports, __webpack_require__) {
+
+	'use strict';
+	
+	exports.__esModule = true;
+	exports.ActionTypes = undefined;
+	exports["default"] = createStore;
+	
+	var _isPlainObject = __webpack_require__(9);
+	
+	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+	
+	var _symbolObservable = __webpack_require__(13);
+	
+	var _symbolObservable2 = _interopRequireDefault(_symbolObservable);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	
+	/**
+	 * These are private action types reserved by Redux.
+	 * For any unknown actions, you must return the current state.
+	 * If the current state is undefined, you must return the initial state.
+	 * Do not reference these action types directly in your code.
+	 */
+	var ActionTypes = exports.ActionTypes = {
+	  INIT: '@@redux/INIT'
+	};
+	
+	/**
+	 * Creates a Redux store that holds the state tree.
+	 * The only way to change the data in the store is to call `dispatch()` on it.
+	 *
+	 * There should only be a single store in your app. To specify how different
+	 * parts of the state tree respond to actions, you may combine several reducers
+	 * into a single reducer function by using `combineReducers`.
+	 *
+	 * @param {Function} reducer A function that returns the next state tree, given
+	 * the current state tree and the action to handle.
+	 *
+	 * @param {any} [initialState] The initial state. You may optionally specify it
+	 * to hydrate the state from the server in universal apps, or to restore a
+	 * previously serialized user session.
+	 * If you use `combineReducers` to produce the root reducer function, this must be
+	 * an object with the same shape as `combineReducers` keys.
+	 *
+	 * @param {Function} enhancer The store enhancer. You may optionally specify it
+	 * to enhance the store with third-party capabilities such as middleware,
+	 * time travel, persistence, etc. The only store enhancer that ships with Redux
+	 * is `applyMiddleware()`.
+	 *
+	 * @returns {Store} A Redux store that lets you read the state, dispatch actions
+	 * and subscribe to changes.
+	 */
+	function createStore(reducer, initialState, enhancer) {
+	  var _ref2;
+	
+	  if (typeof initialState === 'function' && typeof enhancer === 'undefined') {
+	    enhancer = initialState;
+	    initialState = undefined;
+	  }
+	
+	  if (typeof enhancer !== 'undefined') {
+	    if (typeof enhancer !== 'function') {
+	      throw new Error('Expected the enhancer to be a function.');
+	    }
+	
+	    return enhancer(createStore)(reducer, initialState);
+	  }
+	
+	  if (typeof reducer !== 'function') {
+	    throw new Error('Expected the reducer to be a function.');
+	  }
+	
+	  var currentReducer = reducer;
+	  var currentState = initialState;
+	  var currentListeners = [];
+	  var nextListeners = currentListeners;
+	  var isDispatching = false;
+	
+	  function ensureCanMutateNextListeners() {
+	    if (nextListeners === currentListeners) {
+	      nextListeners = currentListeners.slice();
+	    }
+	  }
+	
+	  /**
+	   * Reads the state tree managed by the store.
+	   *
+	   * @returns {any} The current state tree of your application.
+	   */
+	  function getState() {
+	    return currentState;
+	  }
+	
+	  /**
+	   * Adds a change listener. It will be called any time an action is dispatched,
+	   * and some part of the state tree may potentially have changed. You may then
+	   * call `getState()` to read the current state tree inside the callback.
+	   *
+	   * You may call `dispatch()` from a change listener, with the following
+	   * caveats:
+	   *
+	   * 1. The subscriptions are snapshotted just before every `dispatch()` call.
+	   * If you subscribe or unsubscribe while the listeners are being invoked, this
+	   * will not have any effect on the `dispatch()` that is currently in progress.
+	   * However, the next `dispatch()` call, whether nested or not, will use a more
+	   * recent snapshot of the subscription list.
+	   *
+	   * 2. The listener should not expect to see all state changes, as the state
+	   * might have been updated multiple times during a nested `dispatch()` before
+	   * the listener is called. It is, however, guaranteed that all subscribers
+	   * registered before the `dispatch()` started will be called with the latest
+	   * state by the time it exits.
+	   *
+	   * @param {Function} listener A callback to be invoked on every dispatch.
+	   * @returns {Function} A function to remove this change listener.
+	   */
+	  function subscribe(listener) {
+	    if (typeof listener !== 'function') {
+	      throw new Error('Expected listener to be a function.');
+	    }
+	
+	    var isSubscribed = true;
+	
+	    ensureCanMutateNextListeners();
+	    nextListeners.push(listener);
+	
+	    return function unsubscribe() {
+	      if (!isSubscribed) {
+	        return;
+	      }
+	
+	      isSubscribed = false;
+	
+	      ensureCanMutateNextListeners();
+	      var index = nextListeners.indexOf(listener);
+	      nextListeners.splice(index, 1);
+	    };
+	  }
+	
+	  /**
+	   * Dispatches an action. It is the only way to trigger a state change.
+	   *
+	   * The `reducer` function, used to create the store, will be called with the
+	   * current state tree and the given `action`. Its return value will
+	   * be considered the **next** state of the tree, and the change listeners
+	   * will be notified.
+	   *
+	   * The base implementation only supports plain object actions. If you want to
+	   * dispatch a Promise, an Observable, a thunk, or something else, you need to
+	   * wrap your store creating function into the corresponding middleware. For
+	   * example, see the documentation for the `redux-thunk` package. Even the
+	   * middleware will eventually dispatch plain object actions using this method.
+	   *
+	   * @param {Object} action A plain object representing “what changed”. It is
+	   * a good idea to keep actions serializable so you can record and replay user
+	   * sessions, or use the time travelling `redux-devtools`. An action must have
+	   * a `type` property which may not be `undefined`. It is a good idea to use
+	   * string constants for action types.
+	   *
+	   * @returns {Object} For convenience, the same action object you dispatched.
+	   *
+	   * Note that, if you use a custom middleware, it may wrap `dispatch()` to
+	   * return something else (for example, a Promise you can await).
+	   */
+	  function dispatch(action) {
+	    if (!(0, _isPlainObject2["default"])(action)) {
+	      throw new Error('Actions must be plain objects. ' + 'Use custom middleware for async actions.');
+	    }
+	
+	    if (typeof action.type === 'undefined') {
+	      throw new Error('Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?');
+	    }
+	
+	    if (isDispatching) {
+	      throw new Error('Reducers may not dispatch actions.');
+	    }
+	
+	    try {
+	      isDispatching = true;
+	      currentState = currentReducer(currentState, action);
+	    } finally {
+	      isDispatching = false;
+	    }
+	
+	    var listeners = currentListeners = nextListeners;
+	    for (var i = 0; i < listeners.length; i++) {
+	      listeners[i]();
+	    }
+	
+	    return action;
+	  }
+	
+	  /**
+	   * Replaces the reducer currently used by the store to calculate the state.
+	   *
+	   * You might need this if your app implements code splitting and you want to
+	   * load some of the reducers dynamically. You might also need this if you
+	   * implement a hot reloading mechanism for Redux.
+	   *
+	   * @param {Function} nextReducer The reducer for the store to use instead.
+	   * @returns {void}
+	   */
+	  function replaceReducer(nextReducer) {
+	    if (typeof nextReducer !== 'function') {
+	      throw new Error('Expected the nextReducer to be a function.');
+	    }
+	
+	    currentReducer = nextReducer;
+	    dispatch({ type: ActionTypes.INIT });
+	  }
+	
+	  /**
+	   * Interoperability point for observable/reactive libraries.
+	   * @returns {observable} A minimal observable of state changes.
+	   * For more information, see the observable proposal:
+	   * https://github.com/zenparsing/es-observable
+	   */
+	  function observable() {
+	    var _ref;
+	
+	    var outerSubscribe = subscribe;
+	    return _ref = {
+	      /**
+	       * The minimal observable subscription method.
+	       * @param {Object} observer Any object that can be used as an observer.
+	       * The observer object should have a `next` method.
+	       * @returns {subscription} An object with an `unsubscribe` method that can
+	       * be used to unsubscribe the observable from the store, and prevent further
+	       * emission of values from the observable.
+	       */
+	
+	      subscribe: function subscribe(observer) {
+	        if (typeof observer !== 'object') {
+	          throw new TypeError('Expected the observer to be an object.');
+	        }
+	
+	        function observeState() {
+	          if (observer.next) {
+	            observer.next(getState());
+	          }
+	        }
+	
+	        observeState();
+	        var unsubscribe = outerSubscribe(observeState);
+	        return { unsubscribe: unsubscribe };
+	      }
+	    }, _ref[_symbolObservable2["default"]] = function () {
+	      return this;
+	    }, _ref;
+	  }
+	
+	  // When a store is created, an "INIT" action is dispatched so that every
+	  // reducer returns their initial state. This effectively populates
+	  // the initial state tree.
+	  dispatch({ type: ActionTypes.INIT });
+	
+	  return _ref2 = {
+	    dispatch: dispatch,
+	    subscribe: subscribe,
+	    getState: getState,
+	    replaceReducer: replaceReducer
+	  }, _ref2[_symbolObservable2["default"]] = observable, _ref2;
+	}
+
+/***/ },
+/* 9 */
+/***/ function(module, exports, __webpack_require__) {
+
+	var getPrototype = __webpack_require__(10),
+	    isHostObject = __webpack_require__(11),
+	    isObjectLike = __webpack_require__(12);
+	
+	/** `Object#toString` result references. */
+	var objectTag = '[object Object]';
+	
+	/** Used for built-in method references. */
+	var objectProto = Object.prototype;
+	
+	/** Used to resolve the decompiled source of functions. */
+	var funcToString = Function.prototype.toString;
+	
+	/** Used to check objects for own properties. */
+	var hasOwnProperty = objectProto.hasOwnProperty;
+	
+	/** Used to infer the `Object` constructor. */
+	var objectCtorString = funcToString.call(Object);
+	
+	/**
+	 * Used to resolve the
+	 * [`toStringTag`](http://ecma-international.org/ecma-262/6.0/#sec-object.prototype.tostring)
+	 * of values.
+	 */
+	var objectToString = objectProto.toString;
+	
+	/**
+	 * Checks if `value` is a plain object, that is, an object created by the
+	 * `Object` constructor or one with a `[[Prototype]]` of `null`.
+	 *
+	 * @static
+	 * @memberOf _
+	 * @since 0.8.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a plain object,
+	 *  else `false`.
+	 * @example
+	 *
+	 * function Foo() {
+	 *   this.a = 1;
+	 * }
+	 *
+	 * _.isPlainObject(new Foo);
+	 * // => false
+	 *
+	 * _.isPlainObject([1, 2, 3]);
+	 * // => false
+	 *
+	 * _.isPlainObject({ 'x': 0, 'y': 0 });
+	 * // => true
+	 *
+	 * _.isPlainObject(Object.create(null));
+	 * // => true
+	 */
+	function isPlainObject(value) {
+	  if (!isObjectLike(value) ||
+	      objectToString.call(value) != objectTag || isHostObject(value)) {
+	    return false;
+	  }
+	  var proto = getPrototype(value);
+	  if (proto === null) {
+	    return true;
+	  }
+	  var Ctor = hasOwnProperty.call(proto, 'constructor') && proto.constructor;
+	  return (typeof Ctor == 'function' &&
+	    Ctor instanceof Ctor && funcToString.call(Ctor) == objectCtorString);
+	}
+	
+	module.exports = isPlainObject;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	/* Built-in method references for those with the same name as other `lodash` methods. */
+	var nativeGetPrototype = Object.getPrototypeOf;
+	
+	/**
+	 * Gets the `[[Prototype]]` of `value`.
+	 *
+	 * @private
+	 * @param {*} value The value to query.
+	 * @returns {null|Object} Returns the `[[Prototype]]`.
+	 */
+	function getPrototype(value) {
+	  return nativeGetPrototype(Object(value));
+	}
+	
+	module.exports = getPrototype;
+
+
+/***/ },
 /* 11 */
 /***/ function(module, exports) {
 
 	/**
-	 * Applies a function to every key-value pair inside an object.
+	 * Checks if `value` is a host object in IE < 9.
 	 *
-	 * @param {Object} obj The source object.
-	 * @param {Function} fn The mapper function that receives the value and the key.
-	 * @returns {Object} A new object that contains the mapped values for the keys.
+	 * @private
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
 	 */
-	"use strict";
-	
-	exports.__esModule = true;
-	exports["default"] = mapValues;
-	
-	function mapValues(obj, fn) {
-	  return Object.keys(obj).reduce(function (result, key) {
-	    result[key] = fn(obj[key], key);
-	    return result;
-	  }, {});
+	function isHostObject(value) {
+	  // Many host objects are `Object` objects that can coerce to strings
+	  // despite having improperly defined `toString` methods.
+	  var result = false;
+	  if (value != null && typeof value.toString != 'function') {
+	    try {
+	      result = !!(value + '');
+	    } catch (e) {}
+	  }
+	  return result;
 	}
 	
-	module.exports = exports["default"];
+	module.exports = isHostObject;
+
 
 /***/ },
 /* 12 */
 /***/ function(module, exports) {
 
 	/**
-	 * Picks key-value pairs from an object where values satisfy a predicate.
+	 * Checks if `value` is object-like. A value is object-like if it's not `null`
+	 * and has a `typeof` result of "object".
 	 *
-	 * @param {Object} obj The object to pick from.
-	 * @param {Function} fn The predicate the values must satisfy to be copied.
-	 * @returns {Object} The object with the values that satisfied the predicate.
+	 * @static
+	 * @memberOf _
+	 * @since 4.0.0
+	 * @category Lang
+	 * @param {*} value The value to check.
+	 * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+	 * @example
+	 *
+	 * _.isObjectLike({});
+	 * // => true
+	 *
+	 * _.isObjectLike([1, 2, 3]);
+	 * // => true
+	 *
+	 * _.isObjectLike(_.noop);
+	 * // => false
+	 *
+	 * _.isObjectLike(null);
+	 * // => false
 	 */
-	"use strict";
-	
-	exports.__esModule = true;
-	exports["default"] = pick;
-	
-	function pick(obj, fn) {
-	  return Object.keys(obj).reduce(function (result, key) {
-	    if (fn(obj[key])) {
-	      result[key] = obj[key];
-	    }
-	    return result;
-	  }, {});
+	function isObjectLike(value) {
+	  return !!value && typeof value == 'object';
 	}
 	
-	module.exports = exports["default"];
+	module.exports = isObjectLike;
+
 
 /***/ },
 /* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
+	/* WEBPACK VAR INJECTION */(function(global) {/* global window */
+	'use strict';
+	
+	module.exports = __webpack_require__(14)(global || window || this);
+	
+	/* WEBPACK VAR INJECTION */}.call(exports, (function() { return this; }())))
+
+/***/ },
+/* 14 */
+/***/ function(module, exports) {
+
+	'use strict';
+	
+	module.exports = function symbolObservablePonyfill(root) {
+		var result;
+		var Symbol = root.Symbol;
+	
+		if (typeof Symbol === 'function') {
+			if (Symbol.observable) {
+				result = Symbol.observable;
+			} else {
+				result = Symbol('observable');
+				Symbol.observable = result;
+			}
+		} else {
+			result = '@@observable';
+		}
+	
+		return result;
+	};
+
+
+/***/ },
+/* 15 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(process) {'use strict';
+	
+	exports.__esModule = true;
+	exports["default"] = combineReducers;
+	
+	var _createStore = __webpack_require__(8);
+	
+	var _isPlainObject = __webpack_require__(9);
+	
+	var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+	
+	var _warning = __webpack_require__(16);
+	
+	var _warning2 = _interopRequireDefault(_warning);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+	
+	function getUndefinedStateErrorMessage(key, action) {
+	  var actionType = action && action.type;
+	  var actionName = actionType && '"' + actionType.toString() + '"' || 'an action';
+	
+	  return 'Given action ' + actionName + ', reducer "' + key + '" returned undefined. ' + 'To ignore an action, you must explicitly return the previous state.';
+	}
+	
+	function getUnexpectedStateShapeWarningMessage(inputState, reducers, action) {
+	  var reducerKeys = Object.keys(reducers);
+	  var argumentName = action && action.type === _createStore.ActionTypes.INIT ? 'initialState argument passed to createStore' : 'previous state received by the reducer';
+	
+	  if (reducerKeys.length === 0) {
+	    return 'Store does not have a valid reducer. Make sure the argument passed ' + 'to combineReducers is an object whose values are reducers.';
+	  }
+	
+	  if (!(0, _isPlainObject2["default"])(inputState)) {
+	    return 'The ' + argumentName + ' has unexpected type of "' + {}.toString.call(inputState).match(/\s([a-z|A-Z]+)/)[1] + '". Expected argument to be an object with the following ' + ('keys: "' + reducerKeys.join('", "') + '"');
+	  }
+	
+	  var unexpectedKeys = Object.keys(inputState).filter(function (key) {
+	    return !reducers.hasOwnProperty(key);
+	  });
+	
+	  if (unexpectedKeys.length > 0) {
+	    return 'Unexpected ' + (unexpectedKeys.length > 1 ? 'keys' : 'key') + ' ' + ('"' + unexpectedKeys.join('", "') + '" found in ' + argumentName + '. ') + 'Expected to find one of the known reducer keys instead: ' + ('"' + reducerKeys.join('", "') + '". Unexpected keys will be ignored.');
+	  }
+	}
+	
+	function assertReducerSanity(reducers) {
+	  Object.keys(reducers).forEach(function (key) {
+	    var reducer = reducers[key];
+	    var initialState = reducer(undefined, { type: _createStore.ActionTypes.INIT });
+	
+	    if (typeof initialState === 'undefined') {
+	      throw new Error('Reducer "' + key + '" returned undefined during initialization. ' + 'If the state passed to the reducer is undefined, you must ' + 'explicitly return the initial state. The initial state may ' + 'not be undefined.');
+	    }
+	
+	    var type = '@@redux/PROBE_UNKNOWN_ACTION_' + Math.random().toString(36).substring(7).split('').join('.');
+	    if (typeof reducer(undefined, { type: type }) === 'undefined') {
+	      throw new Error('Reducer "' + key + '" returned undefined when probed with a random type. ' + ('Don\'t try to handle ' + _createStore.ActionTypes.INIT + ' or other actions in "redux/*" ') + 'namespace. They are considered private. Instead, you must return the ' + 'current state for any unknown actions, unless it is undefined, ' + 'in which case you must return the initial state, regardless of the ' + 'action type. The initial state may not be undefined.');
+	    }
+	  });
+	}
+	
+	/**
+	 * Turns an object whose values are different reducer functions, into a single
+	 * reducer function. It will call every child reducer, and gather their results
+	 * into a single state object, whose keys correspond to the keys of the passed
+	 * reducer functions.
+	 *
+	 * @param {Object} reducers An object whose values correspond to different
+	 * reducer functions that need to be combined into one. One handy way to obtain
+	 * it is to use ES6 `import * as reducers` syntax. The reducers may never return
+	 * undefined for any action. Instead, they should return their initial state
+	 * if the state passed to them was undefined, and the current state for any
+	 * unrecognized action.
+	 *
+	 * @returns {Function} A reducer function that invokes every reducer inside the
+	 * passed object, and builds a state object with the same shape.
+	 */
+	function combineReducers(reducers) {
+	  var reducerKeys = Object.keys(reducers);
+	  var finalReducers = {};
+	  for (var i = 0; i < reducerKeys.length; i++) {
+	    var key = reducerKeys[i];
+	    if (typeof reducers[key] === 'function') {
+	      finalReducers[key] = reducers[key];
+	    }
+	  }
+	  var finalReducerKeys = Object.keys(finalReducers);
+	
+	  var sanityError;
+	  try {
+	    assertReducerSanity(finalReducers);
+	  } catch (e) {
+	    sanityError = e;
+	  }
+	
+	  return function combination() {
+	    var state = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+	    var action = arguments[1];
+	
+	    if (sanityError) {
+	      throw sanityError;
+	    }
+	
+	    if (process.env.NODE_ENV !== 'production') {
+	      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action);
+	      if (warningMessage) {
+	        (0, _warning2["default"])(warningMessage);
+	      }
+	    }
+	
+	    var hasChanged = false;
+	    var nextState = {};
+	    for (var i = 0; i < finalReducerKeys.length; i++) {
+	      var key = finalReducerKeys[i];
+	      var reducer = finalReducers[key];
+	      var previousStateForKey = state[key];
+	      var nextStateForKey = reducer(previousStateForKey, action);
+	      if (typeof nextStateForKey === 'undefined') {
+	        var errorMessage = getUndefinedStateErrorMessage(key, action);
+	        throw new Error(errorMessage);
+	      }
+	      nextState[key] = nextStateForKey;
+	      hasChanged = hasChanged || nextStateForKey !== previousStateForKey;
+	    }
+	    return hasChanged ? nextState : state;
+	  };
+	}
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)))
+
+/***/ },
+/* 16 */
+/***/ function(module, exports) {
+
 	'use strict';
 	
 	exports.__esModule = true;
-	exports['default'] = bindActionCreators;
+	exports["default"] = warning;
+	/**
+	 * Prints a warning in the console if it exists.
+	 *
+	 * @param {String} message The warning message.
+	 * @returns {void}
+	 */
+	function warning(message) {
+	  /* eslint-disable no-console */
+	  if (typeof console !== 'undefined' && typeof console.error === 'function') {
+	    console.error(message);
+	  }
+	  /* eslint-enable no-console */
+	  try {
+	    // This error was thrown as a convenience so that if you enable
+	    // "break on all exceptions" in your console,
+	    // it would pause the execution at this line.
+	    throw new Error(message);
+	    /* eslint-disable no-empty */
+	  } catch (e) {}
+	  /* eslint-enable no-empty */
+	}
+
+/***/ },
+/* 17 */
+/***/ function(module, exports) {
+
+	'use strict';
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _mapValues = __webpack_require__(11);
-	
-	var _mapValues2 = _interopRequireDefault(_mapValues);
-	
+	exports.__esModule = true;
+	exports["default"] = bindActionCreators;
 	function bindActionCreator(actionCreator, dispatch) {
 	  return function () {
 	    return dispatch(actionCreator.apply(undefined, arguments));
@@ -1002,25 +1270,29 @@ module.exports =
 	 * function as `actionCreators`, the return value will also be a single
 	 * function.
 	 */
-	
 	function bindActionCreators(actionCreators, dispatch) {
 	  if (typeof actionCreators === 'function') {
 	    return bindActionCreator(actionCreators, dispatch);
 	  }
 	
-	  if (typeof actionCreators !== 'object' || actionCreators === null || actionCreators === undefined) {
+	  if (typeof actionCreators !== 'object' || actionCreators === null) {
 	    throw new Error('bindActionCreators expected an object or a function, instead received ' + (actionCreators === null ? 'null' : typeof actionCreators) + '. ' + 'Did you write "import ActionCreators from" instead of "import * as ActionCreators from"?');
 	  }
 	
-	  return _mapValues2['default'](actionCreators, function (actionCreator) {
-	    return bindActionCreator(actionCreator, dispatch);
-	  });
+	  var keys = Object.keys(actionCreators);
+	  var boundActionCreators = {};
+	  for (var i = 0; i < keys.length; i++) {
+	    var key = keys[i];
+	    var actionCreator = actionCreators[key];
+	    if (typeof actionCreator === 'function') {
+	      boundActionCreators[key] = bindActionCreator(actionCreator, dispatch);
+	    }
+	  }
+	  return boundActionCreators;
 	}
-	
-	module.exports = exports['default'];
 
 /***/ },
-/* 14 */
+/* 18 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1029,13 +1301,13 @@ module.exports =
 	
 	var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
 	
-	exports['default'] = applyMiddleware;
+	exports["default"] = applyMiddleware;
 	
-	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-	
-	var _compose = __webpack_require__(15);
+	var _compose = __webpack_require__(19);
 	
 	var _compose2 = _interopRequireDefault(_compose);
+	
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 	
 	/**
 	 * Creates a store enhancer that applies middleware to the dispatch method
@@ -1053,15 +1325,14 @@ module.exports =
 	 * @param {...Function} middlewares The middleware chain to be applied.
 	 * @returns {Function} A store enhancer applying the middleware.
 	 */
-	
 	function applyMiddleware() {
 	  for (var _len = arguments.length, middlewares = Array(_len), _key = 0; _key < _len; _key++) {
 	    middlewares[_key] = arguments[_key];
 	  }
 	
-	  return function (next) {
-	    return function (reducer, initialState) {
-	      var store = next(reducer, initialState);
+	  return function (createStore) {
+	    return function (reducer, initialState, enhancer) {
+	      var store = createStore(reducer, initialState, enhancer);
 	      var _dispatch = store.dispatch;
 	      var chain = [];
 	
@@ -1074,7 +1345,7 @@ module.exports =
 	      chain = middlewares.map(function (middleware) {
 	        return middleware(middlewareAPI);
 	      });
-	      _dispatch = _compose2['default'].apply(undefined, chain)(store.dispatch);
+	      _dispatch = _compose2["default"].apply(undefined, chain)(store.dispatch);
 	
 	      return _extends({}, store, {
 	        dispatch: _dispatch
@@ -1082,41 +1353,54 @@ module.exports =
 	    };
 	  };
 	}
-	
-	module.exports = exports['default'];
 
 /***/ },
-/* 15 */
+/* 19 */
 /***/ function(module, exports) {
 
-	/**
-	 * Composes single-argument functions from right to left.
-	 *
-	 * @param {...Function} funcs The functions to compose.
-	 * @returns {Function} A function obtained by composing functions from right to
-	 * left. For example, compose(f, g, h) is identical to arg => f(g(h(arg))).
-	 */
 	"use strict";
 	
 	exports.__esModule = true;
 	exports["default"] = compose;
+	/**
+	 * Composes single-argument functions from right to left. The rightmost
+	 * function can take multiple arguments as it provides the signature for
+	 * the resulting composite function.
+	 *
+	 * @param {...Function} funcs The functions to compose.
+	 * @returns {Function} A function obtained by composing the argument functions
+	 * from right to left. For example, compose(f, g, h) is identical to doing
+	 * (...args) => f(g(h(...args))).
+	 */
 	
 	function compose() {
 	  for (var _len = arguments.length, funcs = Array(_len), _key = 0; _key < _len; _key++) {
 	    funcs[_key] = arguments[_key];
 	  }
 	
-	  return function (arg) {
-	    return funcs.reduceRight(function (composed, f) {
-	      return f(composed);
-	    }, arg);
-	  };
-	}
+	  if (funcs.length === 0) {
+	    return function (arg) {
+	      return arg;
+	    };
+	  } else {
+	    var _ret = function () {
+	      var last = funcs[funcs.length - 1];
+	      var rest = funcs.slice(0, -1);
+	      return {
+	        v: function v() {
+	          return rest.reduceRight(function (composed, f) {
+	            return f(composed);
+	          }, last.apply(undefined, arguments));
+	        }
+	      };
+	    }();
 	
-	module.exports = exports["default"];
+	    if (typeof _ret === "object") return _ret.v;
+	  }
+	}
 
 /***/ },
-/* 16 */
+/* 20 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1161,7 +1445,7 @@ module.exports =
 	module.exports = exports['default'];
 
 /***/ },
-/* 17 */
+/* 21 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
@@ -1176,7 +1460,7 @@ module.exports =
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
 	
-	var _jsWorkerSearch = __webpack_require__(18);
+	var _jsWorkerSearch = __webpack_require__(22);
 	
 	var _jsWorkerSearch2 = _interopRequireDefault(_jsWorkerSearch);
 	
@@ -1355,7 +1639,7 @@ module.exports =
 	module.exports = exports['default'];
 
 /***/ },
-/* 18 */
+/* 22 */
 /***/ function(module, exports) {
 
 	module.exports =
@@ -1433,7 +1717,9 @@ module.exports =
 	
 		'use strict';
 		
-		var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+		var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+		
+		var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 		
 		Object.defineProperty(exports, "__esModule", {
 		  value: true
@@ -1449,8 +1735,6 @@ module.exports =
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
-		function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-		
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 		
 		/**
@@ -1458,7 +1742,7 @@ module.exports =
 		 * Indexing and searching is performed in the UI thread as a fallback when web workers aren't supported.
 		 */
 		
-		var SearchApi = (function () {
+		var SearchApi = function () {
 		  function SearchApi() {
 		    _classCallCheck(this, SearchApi);
 		
@@ -1474,13 +1758,13 @@ module.exports =
 		    this.indexDocument = this.indexDocument.bind(this);
 		
 		    if (!(typeof this.indexDocument === 'function')) {
-		      throw new TypeError('Value of "this.indexDocument" violates contract, expected (any, string) => SearchApi got ' + (this.indexDocument === null ? 'null' : _typeof(this.indexDocument) === 'object' && this.indexDocument.constructor ? this.indexDocument.constructor.name || '[Unknown Object]' : _typeof(this.indexDocument)));
+		      throw new TypeError('Value of "this.indexDocument" violates contract.\n\nExpected:\n(any, string) => SearchApi\n\nGot:\n' + _inspect(this.indexDocument));
 		    }
 		
 		    this.search = this.search.bind(this);
 		
 		    if (!(typeof this.search === 'function')) {
-		      throw new TypeError('Value of "this.search" violates contract, expected (string) => Promise got ' + (this.search === null ? 'null' : _typeof(this.search) === 'object' && this.search.constructor ? this.search.constructor.name || '[Unknown Object]' : _typeof(this.search)));
+		      throw new TypeError('Value of "this.search" violates contract.\n\nExpected:\n(string) => Promise\n\nGot:\n' + _inspect(this.search));
 		    }
 		  }
 		
@@ -1497,14 +1781,14 @@ module.exports =
 		    value: function indexDocument(uid, text) {
 		      function _ref(_id) {
 		        if (!(_id instanceof SearchApi)) {
-		          throw new TypeError('Function return value violates contract, expected SearchApi got ' + (_id === null ? 'null' : (typeof _id === 'undefined' ? 'undefined' : _typeof(_id)) === 'object' && _id.constructor ? _id.constructor.name || '[Unknown Object]' : typeof _id === 'undefined' ? 'undefined' : _typeof(_id)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nSearchApi\n\nGot:\n' + _inspect(_id));
 		        }
 		
 		        return _id;
 		      }
 		
 		      if (!(typeof text === 'string')) {
-		        throw new TypeError('Value of argument "text" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));
+		        throw new TypeError('Value of argument "text" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(text));
 		      }
 		
 		      this._search.indexDocument(uid, text);
@@ -1529,14 +1813,14 @@ module.exports =
 		    value: function search(query) {
 		      function _ref2(_id2) {
 		        if (!(_id2 instanceof Promise)) {
-		          throw new TypeError('Function return value violates contract, expected Promise got ' + (_id2 === null ? 'null' : (typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)) === 'object' && _id2.constructor ? _id2.constructor.name || '[Unknown Object]' : typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nPromise\n\nGot:\n' + _inspect(_id2));
 		        }
 		
 		        return _id2;
 		      }
 		
 		      if (!(typeof query === 'string')) {
-		        throw new TypeError('Value of argument "query" violates contract, expected string got ' + (query === null ? 'null' : (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object' && query.constructor ? query.constructor.name || '[Unknown Object]' : typeof query === 'undefined' ? 'undefined' : _typeof(query)));
+		        throw new TypeError('Value of argument "query" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(query));
 		      }
 		
 		      // Promise.resolve handles both synchronous and web-worker Search utilities
@@ -1545,9 +1829,53 @@ module.exports =
 		  }]);
 		
 		  return SearchApi;
-		})();
+		}();
 		
 		exports.default = SearchApi;
+		
+		function _inspect(input) {
+		  if (input === null) {
+		    return 'null';
+		  } else if (input === undefined) {
+		    return 'void';
+		  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {
+		    return typeof input === 'undefined' ? 'undefined' : _typeof(input);
+		  } else if (Array.isArray(input)) {
+		    if (input.length > 0) {
+		      var first = _inspect(input[0]);
+	
+		      if (input.every(function (item) {
+		        return _inspect(item) === first;
+		      })) {
+		        return first.trim() + '[]';
+		      } else {
+		        return '[' + input.map(_inspect).join(', ') + ']';
+		      }
+		    } else {
+		      return 'Array';
+		    }
+		  } else {
+		    var keys = Object.keys(input);
+	
+		    if (!keys.length) {
+		      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		        return input.constructor.name;
+		      } else {
+		        return 'Object';
+		      }
+		    }
+	
+		    var entries = keys.map(function (key) {
+		      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';
+		    }).join('\n  ');
+	
+		    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		      return input.constructor.name + ' {\n  ' + entries + '\n}';
+		    } else {
+		      return '{ ' + entries + '\n}';
+		    }
+		  }
+		}
 	
 	/***/ },
 	/* 3 */
@@ -1574,7 +1902,9 @@ module.exports =
 	
 		'use strict';
 		
-		var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+		var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+		
+		var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 		
 		Object.defineProperty(exports, "__esModule", {
 		  value: true
@@ -1586,8 +1916,6 @@ module.exports =
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
-		function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-		
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 		
 		/**
@@ -1595,7 +1923,7 @@ module.exports =
 		 * Forked from JS search (github.com/bvaughn/js-search).
 		 */
 		
-		var SearchUtility = (function () {
+		var SearchUtility = function () {
 		
 		  /**
 		   * Constructor.
@@ -1623,14 +1951,14 @@ module.exports =
 		
 		      function _ref(_id) {
 		        if (!(_id instanceof SearchUtility)) {
-		          throw new TypeError('Function return value violates contract, expected SearchUtility got ' + (_id === null ? 'null' : (typeof _id === 'undefined' ? 'undefined' : _typeof(_id)) === 'object' && _id.constructor ? _id.constructor.name || '[Unknown Object]' : typeof _id === 'undefined' ? 'undefined' : _typeof(_id)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nSearchUtility\n\nGot:\n' + _inspect(_id));
 		        }
 		
 		        return _id;
 		      }
 		
 		      if (!(typeof text === 'string')) {
-		        throw new TypeError('Value of argument "text" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));
+		        throw new TypeError('Value of argument "text" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(text));
 		      }
 		
 		      this.uids[uid] = true;
@@ -1640,7 +1968,7 @@ module.exports =
 		      if (!(Array.isArray(fieldTokens) && fieldTokens.every(function (item) {
 		        return typeof item === 'string';
 		      }))) {
-		        throw new TypeError('Value of variable "fieldTokens" violates contract, expected Array<string> got ' + (fieldTokens === null ? 'null' : (typeof fieldTokens === 'undefined' ? 'undefined' : _typeof(fieldTokens)) === 'object' && fieldTokens.constructor ? fieldTokens.constructor.name || '[Unknown Object]' : typeof fieldTokens === 'undefined' ? 'undefined' : _typeof(fieldTokens)));
+		        throw new TypeError('Value of variable "fieldTokens" violates contract.\n\nExpected:\nArray<string>\n\nGot:\n' + _inspect(fieldTokens));
 		      }
 		
 		      fieldTokens.forEach(function (fieldToken) {
@@ -1649,7 +1977,7 @@ module.exports =
 		        if (!(Array.isArray(expandedTokens) && expandedTokens.every(function (item) {
 		          return typeof item === 'string';
 		        }))) {
-		          throw new TypeError('Value of variable "expandedTokens" violates contract, expected Array<string> got ' + (expandedTokens === null ? 'null' : (typeof expandedTokens === 'undefined' ? 'undefined' : _typeof(expandedTokens)) === 'object' && expandedTokens.constructor ? expandedTokens.constructor.name || '[Unknown Object]' : typeof expandedTokens === 'undefined' ? 'undefined' : _typeof(expandedTokens)));
+		          throw new TypeError('Value of variable "expandedTokens" violates contract.\n\nExpected:\nArray<string>\n\nGot:\n' + _inspect(expandedTokens));
 		        }
 		
 		        expandedTokens.forEach(function (expandedToken) {
@@ -1677,14 +2005,14 @@ module.exports =
 		    value: function search(query) {
 		      function _ref2(_id2) {
 		        if (!Array.isArray(_id2)) {
-		          throw new TypeError('Function return value violates contract, expected Array<any> got ' + (_id2 === null ? 'null' : (typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)) === 'object' && _id2.constructor ? _id2.constructor.name || '[Unknown Object]' : typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nArray<any>\n\nGot:\n' + _inspect(_id2));
 		        }
 		
 		        return _id2;
 		      }
 		
 		      if (!(typeof query === 'string')) {
-		        throw new TypeError('Value of argument "query" violates contract, expected string got ' + (query === null ? 'null' : (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object' && query.constructor ? query.constructor.name || '[Unknown Object]' : typeof query === 'undefined' ? 'undefined' : _typeof(query)));
+		        throw new TypeError('Value of argument "query" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(query));
 		      }
 		
 		      if (!query) {
@@ -1695,7 +2023,7 @@ module.exports =
 		        if (!(Array.isArray(tokens) && tokens.every(function (item) {
 		          return typeof item === 'string';
 		        }))) {
-		          throw new TypeError('Value of variable "tokens" violates contract, expected Array<string> got ' + (tokens === null ? 'null' : (typeof tokens === 'undefined' ? 'undefined' : _typeof(tokens)) === 'object' && tokens.constructor ? tokens.constructor.name || '[Unknown Object]' : typeof tokens === 'undefined' ? 'undefined' : _typeof(tokens)));
+		          throw new TypeError('Value of variable "tokens" violates contract.\n\nExpected:\nArray<string>\n\nGot:\n' + _inspect(tokens));
 		        }
 		
 		        return _ref2(this.searchIndex.search(tokens));
@@ -1715,30 +2043,40 @@ module.exports =
 		        if (!(Array.isArray(_id3) && _id3.every(function (item) {
 		          return typeof item === 'string';
 		        }))) {
-		          throw new TypeError('Function return value violates contract, expected Array<string> got ' + (_id3 === null ? 'null' : (typeof _id3 === 'undefined' ? 'undefined' : _typeof(_id3)) === 'object' && _id3.constructor ? _id3.constructor.name || '[Unknown Object]' : typeof _id3 === 'undefined' ? 'undefined' : _typeof(_id3)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nArray<string>\n\nGot:\n' + _inspect(_id3));
 		        }
 		
 		        return _id3;
 		      }
 		
 		      if (!(typeof token === 'string')) {
-		        throw new TypeError('Value of argument "token" violates contract, expected string got ' + (token === null ? 'null' : (typeof token === 'undefined' ? 'undefined' : _typeof(token)) === 'object' && token.constructor ? token.constructor.name || '[Unknown Object]' : typeof token === 'undefined' ? 'undefined' : _typeof(token)));
+		        throw new TypeError('Value of argument "token" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(token));
 		      }
 		
 		      var expandedTokens = [];
 		
-		      for (var i = 0, length = token.length; i < length; ++i) {
-		        var prefixString = '';
+		      // String.prototype.charAt() may return surrogate halves instead of whole characters.
+		      // When this happens in the context of a web-worker it can cause Chrome to crash.
+		      // Catching the error is a simple solution for now; in the future I may try to better support non-BMP characters.
+		      // Resources:
+		      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt
+		      // https://mathiasbynens.be/notes/javascript-unicode
+		      try {
+		        for (var i = 0, length = token.length; i < length; ++i) {
+		          var prefixString = '';
 		
-		        for (var j = i; j < length; ++j) {
-		          prefixString += token.charAt(j);
+		          for (var j = i; j < length; ++j) {
+		            prefixString += token.charAt(j);
 		
-		          if (!(typeof prefixString === 'string')) {
-		            throw new TypeError('Value of variable "prefixString" violates contract, expected string got ' + (prefixString === null ? 'null' : (typeof prefixString === 'undefined' ? 'undefined' : _typeof(prefixString)) === 'object' && prefixString.constructor ? prefixString.constructor.name || '[Unknown Object]' : typeof prefixString === 'undefined' ? 'undefined' : _typeof(prefixString)));
+		            if (!(typeof prefixString === 'string')) {
+		              throw new TypeError('Value of variable "prefixString" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(prefixString));
+		            }
+		
+		            expandedTokens.push(prefixString);
 		          }
-		
-		          expandedTokens.push(prefixString);
 		        }
+		      } catch (error) {
+		        console.error('Unable to parse token "' + token + '" ' + error);
 		      }
 		
 		      return _ref3(expandedTokens);
@@ -1753,14 +2091,14 @@ module.exports =
 		    value: function _sanitize(string) {
 		      function _ref4(_id4) {
 		        if (!(typeof _id4 === 'string')) {
-		          throw new TypeError('Function return value violates contract, expected string got ' + (_id4 === null ? 'null' : (typeof _id4 === 'undefined' ? 'undefined' : _typeof(_id4)) === 'object' && _id4.constructor ? _id4.constructor.name || '[Unknown Object]' : typeof _id4 === 'undefined' ? 'undefined' : _typeof(_id4)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(_id4));
 		        }
 		
 		        return _id4;
 		      }
 		
 		      if (!(typeof string === 'string')) {
-		        throw new TypeError('Value of argument "string" violates contract, expected string got ' + (string === null ? 'null' : (typeof string === 'undefined' ? 'undefined' : _typeof(string)) === 'object' && string.constructor ? string.constructor.name || '[Unknown Object]' : typeof string === 'undefined' ? 'undefined' : _typeof(string)));
+		        throw new TypeError('Value of argument "string" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(string));
 		      }
 		
 		      return _ref4(string.trim().toLocaleLowerCase());
@@ -1777,14 +2115,14 @@ module.exports =
 		        if (!(Array.isArray(_id5) && _id5.every(function (item) {
 		          return typeof item === 'string';
 		        }))) {
-		          throw new TypeError('Function return value violates contract, expected Array<string> got ' + (_id5 === null ? 'null' : (typeof _id5 === 'undefined' ? 'undefined' : _typeof(_id5)) === 'object' && _id5.constructor ? _id5.constructor.name || '[Unknown Object]' : typeof _id5 === 'undefined' ? 'undefined' : _typeof(_id5)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nArray<string>\n\nGot:\n' + _inspect(_id5));
 		        }
 		
 		        return _id5;
 		      }
 		
 		      if (!(typeof text === 'string')) {
-		        throw new TypeError('Value of argument "text" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));
+		        throw new TypeError('Value of argument "text" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(text));
 		      }
 		
 		      return _ref5(text.split(/\s+/).filter(function (text) {
@@ -1794,9 +2132,53 @@ module.exports =
 		  }]);
 		
 		  return SearchUtility;
-		})();
+		}();
 		
 		exports.default = SearchUtility;
+		
+		function _inspect(input) {
+		  if (input === null) {
+		    return 'null';
+		  } else if (input === undefined) {
+		    return 'void';
+		  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {
+		    return typeof input === 'undefined' ? 'undefined' : _typeof(input);
+		  } else if (Array.isArray(input)) {
+		    if (input.length > 0) {
+		      var first = _inspect(input[0]);
+	
+		      if (input.every(function (item) {
+		        return _inspect(item) === first;
+		      })) {
+		        return first.trim() + '[]';
+		      } else {
+		        return '[' + input.map(_inspect).join(', ') + ']';
+		      }
+		    } else {
+		      return 'Array';
+		    }
+		  } else {
+		    var keys = Object.keys(input);
+	
+		    if (!keys.length) {
+		      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		        return input.constructor.name;
+		      } else {
+		        return 'Object';
+		      }
+		    }
+	
+		    var entries = keys.map(function (key) {
+		      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';
+		    }).join('\n  ');
+	
+		    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		      return input.constructor.name + ' {\n  ' + entries + '\n}';
+		    } else {
+		      return '{ ' + entries + '\n}';
+		    }
+		  }
+		}
 	
 	/***/ },
 	/* 5 */
@@ -1804,13 +2186,13 @@ module.exports =
 	
 		"use strict";
 		
-		var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+		var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+		
+		var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 		
 		Object.defineProperty(exports, "__esModule", {
 		  value: true
 		});
-		
-		function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
 		
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 		
@@ -1820,7 +2202,7 @@ module.exports =
 		 * Forked from JS search (github.com/bvaughn/js-search).
 		 */
 		
-		var SearchIndex = (function () {
+		var SearchIndex = function () {
 		  function SearchIndex() {
 		    _classCallCheck(this, SearchIndex);
 		
@@ -1838,7 +2220,7 @@ module.exports =
 		    key: "indexDocument",
 		    value: function indexDocument(token, uid) {
 		      if (!(typeof token === 'string')) {
-		        throw new TypeError("Value of argument \"token\" violates contract, expected string got " + (token === null ? 'null' : (typeof token === "undefined" ? "undefined" : _typeof(token)) === 'object' && token.constructor ? token.constructor.name || '[Unknown Object]' : typeof token === "undefined" ? "undefined" : _typeof(token)));
+		        throw new TypeError("Value of argument \"token\" violates contract.\n\nExpected:\nstring\n\nGot:\n" + _inspect(token));
 		      }
 		
 		      if (!this.tokenToUidMap[token]) {
@@ -1863,7 +2245,7 @@ module.exports =
 		
 		      function _ref2(_id2) {
 		        if (!Array.isArray(_id2)) {
-		          throw new TypeError("Function return value violates contract, expected Array<any> got " + (_id2 === null ? 'null' : (typeof _id2 === "undefined" ? "undefined" : _typeof(_id2)) === 'object' && _id2.constructor ? _id2.constructor.name || '[Unknown Object]' : typeof _id2 === "undefined" ? "undefined" : _typeof(_id2)));
+		          throw new TypeError("Function return value violates contract.\n\nExpected:\nArray<any>\n\nGot:\n" + _inspect(_id2));
 		        }
 		
 		        return _id2;
@@ -1872,13 +2254,13 @@ module.exports =
 		      if (!(Array.isArray(tokens) && tokens.every(function (item) {
 		        return typeof item === 'string';
 		      }))) {
-		        throw new TypeError("Value of argument \"tokens\" violates contract, expected Array<string> got " + (tokens === null ? 'null' : (typeof tokens === "undefined" ? "undefined" : _typeof(tokens)) === 'object' && tokens.constructor ? tokens.constructor.name || '[Unknown Object]' : typeof tokens === "undefined" ? "undefined" : _typeof(tokens)));
+		        throw new TypeError("Value of argument \"tokens\" violates contract.\n\nExpected:\nArray<string>\n\nGot:\n" + _inspect(tokens));
 		      }
 		
 		      var uidMap = {};
 		
 		      if (!(uidMap != null && (typeof uidMap === "undefined" ? "undefined" : _typeof(uidMap)) === 'object')) {
-		        throw new TypeError("Value of variable \"uidMap\" violates contract, expected { [uid: any]: any\n} got " + (uidMap === null ? 'null' : (typeof uidMap === "undefined" ? "undefined" : _typeof(uidMap)) === 'object' && uidMap.constructor ? uidMap.constructor.name || '[Unknown Object]' : typeof uidMap === "undefined" ? "undefined" : _typeof(uidMap)));
+		        throw new TypeError("Value of variable \"uidMap\" violates contract.\n\nExpected:\n{ [uid: any]: any\n}\n\nGot:\n" + _inspect(uidMap));
 		      }
 		
 		      var initialized = false;
@@ -1887,7 +2269,7 @@ module.exports =
 		        var currentUidMap = _this.tokenToUidMap[token] || {};
 		
 		        if (!(currentUidMap != null && (typeof currentUidMap === "undefined" ? "undefined" : _typeof(currentUidMap)) === 'object')) {
-		          throw new TypeError("Value of variable \"currentUidMap\" violates contract, expected { [uid: any]: any\n} got " + (currentUidMap === null ? 'null' : (typeof currentUidMap === "undefined" ? "undefined" : _typeof(currentUidMap)) === 'object' && currentUidMap.constructor ? currentUidMap.constructor.name || '[Unknown Object]' : typeof currentUidMap === "undefined" ? "undefined" : _typeof(currentUidMap)));
+		          throw new TypeError("Value of variable \"currentUidMap\" violates contract.\n\nExpected:\n{ [uid: any]: any\n}\n\nGot:\n" + _inspect(currentUidMap));
 		        }
 		
 		        if (!initialized) {
@@ -1908,7 +2290,7 @@ module.exports =
 		      var uids = [];
 		
 		      if (!Array.isArray(uids)) {
-		        throw new TypeError("Value of variable \"uids\" violates contract, expected Array<any> got " + (uids === null ? 'null' : (typeof uids === "undefined" ? "undefined" : _typeof(uids)) === 'object' && uids.constructor ? uids.constructor.name || '[Unknown Object]' : typeof uids === "undefined" ? "undefined" : _typeof(uids)));
+		        throw new TypeError("Value of variable \"uids\" violates contract.\n\nExpected:\nArray<any>\n\nGot:\n" + _inspect(uids));
 		      }
 		
 		      for (var _uid3 in uidMap) {
@@ -1920,9 +2302,53 @@ module.exports =
 		  }]);
 		
 		  return SearchIndex;
-		})();
+		}();
 		
 		exports.default = SearchIndex;
+		
+		function _inspect(input) {
+		  if (input === null) {
+		    return 'null';
+		  } else if (input === undefined) {
+		    return 'void';
+		  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {
+		    return typeof input === "undefined" ? "undefined" : _typeof(input);
+		  } else if (Array.isArray(input)) {
+		    if (input.length > 0) {
+		      var first = _inspect(input[0]);
+	
+		      if (input.every(function (item) {
+		        return _inspect(item) === first;
+		      })) {
+		        return first.trim() + '[]';
+		      } else {
+		        return '[' + input.map(_inspect).join(', ') + ']';
+		      }
+		    } else {
+		      return 'Array';
+		    }
+		  } else {
+		    var keys = Object.keys(input);
+	
+		    if (!keys.length) {
+		      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		        return input.constructor.name;
+		      } else {
+		        return 'Object';
+		      }
+		    }
+	
+		    var entries = keys.map(function (key) {
+		      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';
+		    }).join('\n  ');
+	
+		    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		      return input.constructor.name + ' {\n  ' + entries + '\n}';
+		    } else {
+		      return '{ ' + entries + '\n}';
+		    }
+		  }
+		}
 	
 	/***/ },
 	/* 6 */
@@ -1949,7 +2375,9 @@ module.exports =
 	
 		'use strict';
 		
-		var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+		var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+		
+		var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 		
 		Object.defineProperty(exports, "__esModule", {
 		  value: true
@@ -1961,8 +2389,6 @@ module.exports =
 		
 		function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 		
-		function _typeof(obj) { return obj && typeof Symbol !== "undefined" && obj.constructor === Symbol ? "symbol" : typeof obj; }
-		
 		function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 		
 		/**
@@ -1970,7 +2396,7 @@ module.exports =
 		 * This interface exposes web worker search capabilities to the UI thread.
 		 */
 		
-		var SearchWorkerLoader = (function () {
+		var SearchWorkerLoader = function () {
 		
 		  /**
 		   * Constructor.
@@ -1991,13 +2417,13 @@ module.exports =
 		    this.indexDocument = this.indexDocument.bind(this);
 		
 		    if (!(typeof this.indexDocument === 'function')) {
-		      throw new TypeError('Value of "this.indexDocument" violates contract, expected (any, string) => SearchWorkerLoader got ' + (this.indexDocument === null ? 'null' : _typeof(this.indexDocument) === 'object' && this.indexDocument.constructor ? this.indexDocument.constructor.name || '[Unknown Object]' : _typeof(this.indexDocument)));
+		      throw new TypeError('Value of "this.indexDocument" violates contract.\n\nExpected:\n(any, string) => SearchWorkerLoader\n\nGot:\n' + _inspect(this.indexDocument));
 		    }
 		
 		    this.search = this.search.bind(this);
 		
 		    if (!(typeof this.search === 'function')) {
-		      throw new TypeError('Value of "this.search" violates contract, expected (string) => Promise got ' + (this.search === null ? 'null' : _typeof(this.search) === 'object' && this.search.constructor ? this.search.constructor.name || '[Unknown Object]' : _typeof(this.search)));
+		      throw new TypeError('Value of "this.search" violates contract.\n\nExpected:\n(string) => Promise\n\nGot:\n' + _inspect(this.search));
 		    }
 		
 		    this.callbackQueue = [];
@@ -2033,14 +2459,14 @@ module.exports =
 		    value: function indexDocument(uid, text) {
 		      function _ref(_id) {
 		        if (!(_id instanceof SearchWorkerLoader)) {
-		          throw new TypeError('Function return value violates contract, expected SearchWorkerLoader got ' + (_id === null ? 'null' : (typeof _id === 'undefined' ? 'undefined' : _typeof(_id)) === 'object' && _id.constructor ? _id.constructor.name || '[Unknown Object]' : typeof _id === 'undefined' ? 'undefined' : _typeof(_id)));
+		          throw new TypeError('Function return value violates contract.\n\nExpected:\nSearchWorkerLoader\n\nGot:\n' + _inspect(_id));
 		        }
 		
 		        return _id;
 		      }
 		
 		      if (!(typeof text === 'string')) {
-		        throw new TypeError('Value of argument "text" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));
+		        throw new TypeError('Value of argument "text" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(text));
 		      }
 		
 		      this.worker.postMessage({
@@ -2070,7 +2496,7 @@ module.exports =
 		      var _this2 = this;
 		
 		      if (!(typeof query === 'string')) {
-		        throw new TypeError('Value of argument "query" violates contract, expected string got ' + (query === null ? 'null' : (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object' && query.constructor ? query.constructor.name || '[Unknown Object]' : typeof query === 'undefined' ? 'undefined' : _typeof(query)));
+		        throw new TypeError('Value of argument "query" violates contract.\n\nExpected:\nstring\n\nGot:\n' + _inspect(query));
 		      }
 		
 		      return new Promise(function (resolve, reject) {
@@ -2125,9 +2551,53 @@ module.exports =
 		  }]);
 		
 		  return SearchWorkerLoader;
-		})();
+		}();
 		
 		exports.default = SearchWorkerLoader;
+		
+		function _inspect(input) {
+		  if (input === null) {
+		    return 'null';
+		  } else if (input === undefined) {
+		    return 'void';
+		  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {
+		    return typeof input === 'undefined' ? 'undefined' : _typeof(input);
+		  } else if (Array.isArray(input)) {
+		    if (input.length > 0) {
+		      var first = _inspect(input[0]);
+	
+		      if (input.every(function (item) {
+		        return _inspect(item) === first;
+		      })) {
+		        return first.trim() + '[]';
+		      } else {
+		        return '[' + input.map(_inspect).join(', ') + ']';
+		      }
+		    } else {
+		      return 'Array';
+		    }
+		  } else {
+		    var keys = Object.keys(input);
+	
+		    if (!keys.length) {
+		      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		        return input.constructor.name;
+		      } else {
+		        return 'Object';
+		      }
+		    }
+	
+		    var entries = keys.map(function (key) {
+		      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';
+		    }).join('\n  ');
+	
+		    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {
+		      return input.constructor.name + ' {\n  ' + entries + '\n}';
+		    } else {
+		      return '{ ' + entries + '\n}';
+		    }
+		  }
+		}
 	
 	/***/ },
 	/* 8 */
@@ -2361,7 +2831,7 @@ module.exports =
 	/***/ function(module, exports, __webpack_require__) {
 	
 		module.exports = function() {
-			return __webpack_require__(11)("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId])\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\texports: {},\n/******/ \t\t\tid: moduleId,\n/******/ \t\t\tloaded: false\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.loaded = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(0);\n/******/ })\n/************************************************************************/\n/******/ ([\n/* 0 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tvar _util = __webpack_require__(1);\n\t\n\tvar _util2 = _interopRequireDefault(_util);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\t/**\n\t * Search entry point to web worker.\n\t * Builds search index and performs searches on separate thread from the ui.\n\t */\n\t\n\tvar searchUtility = new _util2.default();\n\t\n\tself.addEventListener('message', function (event) {\n\t  var data = event.data;\n\t  var method = data.method;\n\t\n\t  switch (method) {\n\t    case 'indexDocument':\n\t      var uid = data.uid;\n\t      var text = data.text;\n\t\n\t      searchUtility.indexDocument(uid, text);\n\t      break;\n\t    case 'search':\n\t      var callbackId = data.callbackId;\n\t      var query = data.query;\n\t\n\t      var results = searchUtility.search(query);\n\t\n\t      self.postMessage({ callbackId: callbackId, results: results });\n\t      break;\n\t  }\n\t}, false);\n\n/***/ },\n/* 1 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\texports.default = undefined;\n\t\n\tvar _SearchUtility = __webpack_require__(2);\n\t\n\tvar _SearchUtility2 = _interopRequireDefault(_SearchUtility);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\texports.default = _SearchUtility2.default;\n\n/***/ },\n/* 2 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tvar _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\t\n\tvar _SearchIndex = __webpack_require__(3);\n\t\n\tvar _SearchIndex2 = _interopRequireDefault(_SearchIndex);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\tfunction _typeof(obj) { return obj && typeof Symbol !== \"undefined\" && obj.constructor === Symbol ? \"symbol\" : typeof obj; }\n\t\n\tfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\t\n\t/**\n\t * Synchronous client-side full-text search utility.\n\t * Forked from JS search (github.com/bvaughn/js-search).\n\t */\n\t\n\tvar SearchUtility = (function () {\n\t\n\t  /**\n\t   * Constructor.\n\t   */\n\t\n\t  function SearchUtility() {\n\t    _classCallCheck(this, SearchUtility);\n\t\n\t    this.searchIndex = new _SearchIndex2.default();\n\t    this.uids = {};\n\t  }\n\t\n\t  /**\n\t   * Adds or updates a uid in the search index and associates it with the specified text.\n\t   * Note that at this time uids can only be added or updated in the index, not removed.\n\t   *\n\t   * @param uid Uniquely identifies a searchable object\n\t   * @param text Text to associate with uid\n\t   */\n\t\n\t  _createClass(SearchUtility, [{\n\t    key: 'indexDocument',\n\t    value: function indexDocument(uid, text) {\n\t      var _this = this;\n\t\n\t      function _ref(_id) {\n\t        if (!(_id instanceof SearchUtility)) {\n\t          throw new TypeError('Function return value violates contract, expected SearchUtility got ' + (_id === null ? 'null' : (typeof _id === 'undefined' ? 'undefined' : _typeof(_id)) === 'object' && _id.constructor ? _id.constructor.name || '[Unknown Object]' : typeof _id === 'undefined' ? 'undefined' : _typeof(_id)));\n\t        }\n\t\n\t        return _id;\n\t      }\n\t\n\t      if (!(typeof text === 'string')) {\n\t        throw new TypeError('Value of argument \"text\" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));\n\t      }\n\t\n\t      this.uids[uid] = true;\n\t\n\t      var fieldTokens = this._tokenize(this._sanitize(text));\n\t\n\t      if (!(Array.isArray(fieldTokens) && fieldTokens.every(function (item) {\n\t        return typeof item === 'string';\n\t      }))) {\n\t        throw new TypeError('Value of variable \"fieldTokens\" violates contract, expected Array<string> got ' + (fieldTokens === null ? 'null' : (typeof fieldTokens === 'undefined' ? 'undefined' : _typeof(fieldTokens)) === 'object' && fieldTokens.constructor ? fieldTokens.constructor.name || '[Unknown Object]' : typeof fieldTokens === 'undefined' ? 'undefined' : _typeof(fieldTokens)));\n\t      }\n\t\n\t      fieldTokens.forEach(function (fieldToken) {\n\t        var expandedTokens = _this._expandToken(fieldToken);\n\t\n\t        if (!(Array.isArray(expandedTokens) && expandedTokens.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Value of variable \"expandedTokens\" violates contract, expected Array<string> got ' + (expandedTokens === null ? 'null' : (typeof expandedTokens === 'undefined' ? 'undefined' : _typeof(expandedTokens)) === 'object' && expandedTokens.constructor ? expandedTokens.constructor.name || '[Unknown Object]' : typeof expandedTokens === 'undefined' ? 'undefined' : _typeof(expandedTokens)));\n\t        }\n\t\n\t        expandedTokens.forEach(function (expandedToken) {\n\t          return _this.searchIndex.indexDocument(expandedToken, uid);\n\t        });\n\t      });\n\t\n\t      return _ref(this);\n\t    }\n\t\n\t    /**\n\t     * Searches the current index for the specified query text.\n\t     * Only uids matching all of the words within the text will be accepted.\n\t     * If an empty query string is provided all indexed uids will be returned.\n\t     *\n\t     * Document searches are case-insensitive (e.g. \"search\" will match \"Search\").\n\t     * Document searches use substring matching (e.g. \"na\" and \"me\" will both match \"name\").\n\t     *\n\t     * @param query Searchable query text\n\t     * @return Array of uids\n\t     */\n\t\n\t  }, {\n\t    key: 'search',\n\t    value: function search(query) {\n\t      function _ref2(_id2) {\n\t        if (!Array.isArray(_id2)) {\n\t          throw new TypeError('Function return value violates contract, expected Array<any> got ' + (_id2 === null ? 'null' : (typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)) === 'object' && _id2.constructor ? _id2.constructor.name || '[Unknown Object]' : typeof _id2 === 'undefined' ? 'undefined' : _typeof(_id2)));\n\t        }\n\t\n\t        return _id2;\n\t      }\n\t\n\t      if (!(typeof query === 'string')) {\n\t        throw new TypeError('Value of argument \"query\" violates contract, expected string got ' + (query === null ? 'null' : (typeof query === 'undefined' ? 'undefined' : _typeof(query)) === 'object' && query.constructor ? query.constructor.name || '[Unknown Object]' : typeof query === 'undefined' ? 'undefined' : _typeof(query)));\n\t      }\n\t\n\t      if (!query) {\n\t        return _ref2(Object.keys(this.uids));\n\t      } else {\n\t        var tokens = this._tokenize(this._sanitize(query));\n\t\n\t        if (!(Array.isArray(tokens) && tokens.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Value of variable \"tokens\" violates contract, expected Array<string> got ' + (tokens === null ? 'null' : (typeof tokens === 'undefined' ? 'undefined' : _typeof(tokens)) === 'object' && tokens.constructor ? tokens.constructor.name || '[Unknown Object]' : typeof tokens === 'undefined' ? 'undefined' : _typeof(tokens)));\n\t        }\n\t\n\t        return _ref2(this.searchIndex.search(tokens));\n\t      }\n\t    }\n\t\n\t    /**\n\t     * Index strategy based on 'all-substrings-index-strategy.ts' in github.com/bvaughn/js-search/\n\t     *\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_expandToken',\n\t    value: function _expandToken(token) {\n\t      function _ref3(_id3) {\n\t        if (!(Array.isArray(_id3) && _id3.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Function return value violates contract, expected Array<string> got ' + (_id3 === null ? 'null' : (typeof _id3 === 'undefined' ? 'undefined' : _typeof(_id3)) === 'object' && _id3.constructor ? _id3.constructor.name || '[Unknown Object]' : typeof _id3 === 'undefined' ? 'undefined' : _typeof(_id3)));\n\t        }\n\t\n\t        return _id3;\n\t      }\n\t\n\t      if (!(typeof token === 'string')) {\n\t        throw new TypeError('Value of argument \"token\" violates contract, expected string got ' + (token === null ? 'null' : (typeof token === 'undefined' ? 'undefined' : _typeof(token)) === 'object' && token.constructor ? token.constructor.name || '[Unknown Object]' : typeof token === 'undefined' ? 'undefined' : _typeof(token)));\n\t      }\n\t\n\t      var expandedTokens = [];\n\t\n\t      for (var i = 0, length = token.length; i < length; ++i) {\n\t        var prefixString = '';\n\t\n\t        for (var j = i; j < length; ++j) {\n\t          prefixString += token.charAt(j);\n\t\n\t          if (!(typeof prefixString === 'string')) {\n\t            throw new TypeError('Value of variable \"prefixString\" violates contract, expected string got ' + (prefixString === null ? 'null' : (typeof prefixString === 'undefined' ? 'undefined' : _typeof(prefixString)) === 'object' && prefixString.constructor ? prefixString.constructor.name || '[Unknown Object]' : typeof prefixString === 'undefined' ? 'undefined' : _typeof(prefixString)));\n\t          }\n\t\n\t          expandedTokens.push(prefixString);\n\t        }\n\t      }\n\t\n\t      return _ref3(expandedTokens);\n\t    }\n\t\n\t    /**\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_sanitize',\n\t    value: function _sanitize(string) {\n\t      function _ref4(_id4) {\n\t        if (!(typeof _id4 === 'string')) {\n\t          throw new TypeError('Function return value violates contract, expected string got ' + (_id4 === null ? 'null' : (typeof _id4 === 'undefined' ? 'undefined' : _typeof(_id4)) === 'object' && _id4.constructor ? _id4.constructor.name || '[Unknown Object]' : typeof _id4 === 'undefined' ? 'undefined' : _typeof(_id4)));\n\t        }\n\t\n\t        return _id4;\n\t      }\n\t\n\t      if (!(typeof string === 'string')) {\n\t        throw new TypeError('Value of argument \"string\" violates contract, expected string got ' + (string === null ? 'null' : (typeof string === 'undefined' ? 'undefined' : _typeof(string)) === 'object' && string.constructor ? string.constructor.name || '[Unknown Object]' : typeof string === 'undefined' ? 'undefined' : _typeof(string)));\n\t      }\n\t\n\t      return _ref4(string.trim().toLocaleLowerCase());\n\t    }\n\t\n\t    /**\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_tokenize',\n\t    value: function _tokenize(text) {\n\t      function _ref5(_id5) {\n\t        if (!(Array.isArray(_id5) && _id5.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Function return value violates contract, expected Array<string> got ' + (_id5 === null ? 'null' : (typeof _id5 === 'undefined' ? 'undefined' : _typeof(_id5)) === 'object' && _id5.constructor ? _id5.constructor.name || '[Unknown Object]' : typeof _id5 === 'undefined' ? 'undefined' : _typeof(_id5)));\n\t        }\n\t\n\t        return _id5;\n\t      }\n\t\n\t      if (!(typeof text === 'string')) {\n\t        throw new TypeError('Value of argument \"text\" violates contract, expected string got ' + (text === null ? 'null' : (typeof text === 'undefined' ? 'undefined' : _typeof(text)) === 'object' && text.constructor ? text.constructor.name || '[Unknown Object]' : typeof text === 'undefined' ? 'undefined' : _typeof(text)));\n\t      }\n\t\n\t      return _ref5(text.split(/\\s+/).filter(function (text) {\n\t        return text;\n\t      })); // Remove empty tokens\n\t    }\n\t  }]);\n\t\n\t  return SearchUtility;\n\t})();\n\t\n\texports.default = SearchUtility;\n\n/***/ },\n/* 3 */\n/***/ function(module, exports) {\n\n\t\"use strict\";\n\t\n\tvar _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\t\n\tfunction _typeof(obj) { return obj && typeof Symbol !== \"undefined\" && obj.constructor === Symbol ? \"symbol\" : typeof obj; }\n\t\n\tfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\t\n\t/**\n\t * Maps search tokens to uids.\n\t * This structure is used by the Search class to optimize search operations.\n\t * Forked from JS search (github.com/bvaughn/js-search).\n\t */\n\t\n\tvar SearchIndex = (function () {\n\t  function SearchIndex() {\n\t    _classCallCheck(this, SearchIndex);\n\t\n\t    this.tokenToUidMap = {};\n\t  }\n\t\n\t  /**\n\t   * Maps the specified token to a uid.\n\t   *\n\t   * @param token Searchable token (e.g. \"road\")\n\t   * @param uid Identifies a document within the searchable corpus\n\t   */\n\t\n\t  _createClass(SearchIndex, [{\n\t    key: \"indexDocument\",\n\t    value: function indexDocument(token, uid) {\n\t      if (!(typeof token === 'string')) {\n\t        throw new TypeError(\"Value of argument \\\"token\\\" violates contract, expected string got \" + (token === null ? 'null' : (typeof token === \"undefined\" ? \"undefined\" : _typeof(token)) === 'object' && token.constructor ? token.constructor.name || '[Unknown Object]' : typeof token === \"undefined\" ? \"undefined\" : _typeof(token)));\n\t      }\n\t\n\t      if (!this.tokenToUidMap[token]) {\n\t        this.tokenToUidMap[token] = {};\n\t      }\n\t\n\t      this.tokenToUidMap[token][uid] = uid;\n\t    }\n\t\n\t    /**\n\t     * Finds uids that have been mapped to the set of tokens specified.\n\t     * Only uids that have been mapped to all tokens will be returned.\n\t     *\n\t     * @param tokens Array of searchable tokens (e.g. [\"long\", \"road\"])\n\t     * @return Array of uids that have been associated with the set of search tokens\n\t     */\n\t\n\t  }, {\n\t    key: \"search\",\n\t    value: function search(tokens) {\n\t      var _this = this;\n\t\n\t      function _ref2(_id2) {\n\t        if (!Array.isArray(_id2)) {\n\t          throw new TypeError(\"Function return value violates contract, expected Array<any> got \" + (_id2 === null ? 'null' : (typeof _id2 === \"undefined\" ? \"undefined\" : _typeof(_id2)) === 'object' && _id2.constructor ? _id2.constructor.name || '[Unknown Object]' : typeof _id2 === \"undefined\" ? \"undefined\" : _typeof(_id2)));\n\t        }\n\t\n\t        return _id2;\n\t      }\n\t\n\t      if (!(Array.isArray(tokens) && tokens.every(function (item) {\n\t        return typeof item === 'string';\n\t      }))) {\n\t        throw new TypeError(\"Value of argument \\\"tokens\\\" violates contract, expected Array<string> got \" + (tokens === null ? 'null' : (typeof tokens === \"undefined\" ? \"undefined\" : _typeof(tokens)) === 'object' && tokens.constructor ? tokens.constructor.name || '[Unknown Object]' : typeof tokens === \"undefined\" ? \"undefined\" : _typeof(tokens)));\n\t      }\n\t\n\t      var uidMap = {};\n\t\n\t      if (!(uidMap != null && (typeof uidMap === \"undefined\" ? \"undefined\" : _typeof(uidMap)) === 'object')) {\n\t        throw new TypeError(\"Value of variable \\\"uidMap\\\" violates contract, expected { [uid: any]: any\\n} got \" + (uidMap === null ? 'null' : (typeof uidMap === \"undefined\" ? \"undefined\" : _typeof(uidMap)) === 'object' && uidMap.constructor ? uidMap.constructor.name || '[Unknown Object]' : typeof uidMap === \"undefined\" ? \"undefined\" : _typeof(uidMap)));\n\t      }\n\t\n\t      var initialized = false;\n\t\n\t      tokens.forEach(function (token) {\n\t        var currentUidMap = _this.tokenToUidMap[token] || {};\n\t\n\t        if (!(currentUidMap != null && (typeof currentUidMap === \"undefined\" ? \"undefined\" : _typeof(currentUidMap)) === 'object')) {\n\t          throw new TypeError(\"Value of variable \\\"currentUidMap\\\" violates contract, expected { [uid: any]: any\\n} got \" + (currentUidMap === null ? 'null' : (typeof currentUidMap === \"undefined\" ? \"undefined\" : _typeof(currentUidMap)) === 'object' && currentUidMap.constructor ? currentUidMap.constructor.name || '[Unknown Object]' : typeof currentUidMap === \"undefined\" ? \"undefined\" : _typeof(currentUidMap)));\n\t        }\n\t\n\t        if (!initialized) {\n\t          initialized = true;\n\t\n\t          for (var _uid in currentUidMap) {\n\t            uidMap[_uid] = currentUidMap[_uid];\n\t          }\n\t        } else {\n\t          for (var _uid2 in uidMap) {\n\t            if (!currentUidMap[_uid2]) {\n\t              delete uidMap[_uid2];\n\t            }\n\t          }\n\t        }\n\t      });\n\t\n\t      var uids = [];\n\t\n\t      if (!Array.isArray(uids)) {\n\t        throw new TypeError(\"Value of variable \\\"uids\\\" violates contract, expected Array<any> got \" + (uids === null ? 'null' : (typeof uids === \"undefined\" ? \"undefined\" : _typeof(uids)) === 'object' && uids.constructor ? uids.constructor.name || '[Unknown Object]' : typeof uids === \"undefined\" ? \"undefined\" : _typeof(uids)));\n\t      }\n\t\n\t      for (var _uid3 in uidMap) {\n\t        uids.push(uidMap[_uid3]);\n\t      }\n\t\n\t      return _ref2(uids);\n\t    }\n\t  }]);\n\t\n\t  return SearchIndex;\n\t})();\n\t\n\texports.default = SearchIndex;\n\n/***/ }\n/******/ ]);\n//# sourceMappingURL=b93146b1722737f6c785.worker.js.map", __webpack_require__.p + "b93146b1722737f6c785.worker.js");
+			return __webpack_require__(11)("/******/ (function(modules) { // webpackBootstrap\n/******/ \t// The module cache\n/******/ \tvar installedModules = {};\n/******/\n/******/ \t// The require function\n/******/ \tfunction __webpack_require__(moduleId) {\n/******/\n/******/ \t\t// Check if module is in cache\n/******/ \t\tif(installedModules[moduleId])\n/******/ \t\t\treturn installedModules[moduleId].exports;\n/******/\n/******/ \t\t// Create a new module (and put it into the cache)\n/******/ \t\tvar module = installedModules[moduleId] = {\n/******/ \t\t\texports: {},\n/******/ \t\t\tid: moduleId,\n/******/ \t\t\tloaded: false\n/******/ \t\t};\n/******/\n/******/ \t\t// Execute the module function\n/******/ \t\tmodules[moduleId].call(module.exports, module, module.exports, __webpack_require__);\n/******/\n/******/ \t\t// Flag the module as loaded\n/******/ \t\tmodule.loaded = true;\n/******/\n/******/ \t\t// Return the exports of the module\n/******/ \t\treturn module.exports;\n/******/ \t}\n/******/\n/******/\n/******/ \t// expose the modules object (__webpack_modules__)\n/******/ \t__webpack_require__.m = modules;\n/******/\n/******/ \t// expose the module cache\n/******/ \t__webpack_require__.c = installedModules;\n/******/\n/******/ \t// __webpack_public_path__\n/******/ \t__webpack_require__.p = \"\";\n/******/\n/******/ \t// Load entry module and return exports\n/******/ \treturn __webpack_require__(0);\n/******/ })\n/************************************************************************/\n/******/ ([\n/* 0 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tvar _util = __webpack_require__(1);\n\t\n\tvar _util2 = _interopRequireDefault(_util);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\t/**\n\t * Search entry point to web worker.\n\t * Builds search index and performs searches on separate thread from the ui.\n\t */\n\t\n\tvar searchUtility = new _util2.default();\n\t\n\tself.addEventListener('message', function (event) {\n\t  var data = event.data;\n\t  var method = data.method;\n\t\n\t  switch (method) {\n\t    case 'indexDocument':\n\t      var uid = data.uid;\n\t      var text = data.text;\n\t\n\t      searchUtility.indexDocument(uid, text);\n\t      break;\n\t    case 'search':\n\t      var callbackId = data.callbackId;\n\t      var query = data.query;\n\t\n\t      var results = searchUtility.search(query);\n\t\n\t      self.postMessage({ callbackId: callbackId, results: results });\n\t      break;\n\t  }\n\t}, false);\n\n/***/ },\n/* 1 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\texports.default = undefined;\n\t\n\tvar _SearchUtility = __webpack_require__(2);\n\t\n\tvar _SearchUtility2 = _interopRequireDefault(_SearchUtility);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\texports.default = _SearchUtility2.default;\n\n/***/ },\n/* 2 */\n/***/ function(module, exports, __webpack_require__) {\n\n\t'use strict';\n\t\n\tvar _typeof = typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol ? \"symbol\" : typeof obj; };\n\t\n\tvar _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\t\n\tvar _SearchIndex = __webpack_require__(3);\n\t\n\tvar _SearchIndex2 = _interopRequireDefault(_SearchIndex);\n\t\n\tfunction _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }\n\t\n\tfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\t\n\t/**\n\t * Synchronous client-side full-text search utility.\n\t * Forked from JS search (github.com/bvaughn/js-search).\n\t */\n\t\n\tvar SearchUtility = function () {\n\t\n\t  /**\n\t   * Constructor.\n\t   */\n\t\n\t  function SearchUtility() {\n\t    _classCallCheck(this, SearchUtility);\n\t\n\t    this.searchIndex = new _SearchIndex2.default();\n\t    this.uids = {};\n\t  }\n\t\n\t  /**\n\t   * Adds or updates a uid in the search index and associates it with the specified text.\n\t   * Note that at this time uids can only be added or updated in the index, not removed.\n\t   *\n\t   * @param uid Uniquely identifies a searchable object\n\t   * @param text Text to associate with uid\n\t   */\n\t\n\t  _createClass(SearchUtility, [{\n\t    key: 'indexDocument',\n\t    value: function indexDocument(uid, text) {\n\t      var _this = this;\n\t\n\t      function _ref(_id) {\n\t        if (!(_id instanceof SearchUtility)) {\n\t          throw new TypeError('Function return value violates contract.\\n\\nExpected:\\nSearchUtility\\n\\nGot:\\n' + _inspect(_id));\n\t        }\n\t\n\t        return _id;\n\t      }\n\t\n\t      if (!(typeof text === 'string')) {\n\t        throw new TypeError('Value of argument \"text\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(text));\n\t      }\n\t\n\t      this.uids[uid] = true;\n\t\n\t      var fieldTokens = this._tokenize(this._sanitize(text));\n\t\n\t      if (!(Array.isArray(fieldTokens) && fieldTokens.every(function (item) {\n\t        return typeof item === 'string';\n\t      }))) {\n\t        throw new TypeError('Value of variable \"fieldTokens\" violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n' + _inspect(fieldTokens));\n\t      }\n\t\n\t      fieldTokens.forEach(function (fieldToken) {\n\t        var expandedTokens = _this._expandToken(fieldToken);\n\t\n\t        if (!(Array.isArray(expandedTokens) && expandedTokens.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Value of variable \"expandedTokens\" violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n' + _inspect(expandedTokens));\n\t        }\n\t\n\t        expandedTokens.forEach(function (expandedToken) {\n\t          return _this.searchIndex.indexDocument(expandedToken, uid);\n\t        });\n\t      });\n\t\n\t      return _ref(this);\n\t    }\n\t\n\t    /**\n\t     * Searches the current index for the specified query text.\n\t     * Only uids matching all of the words within the text will be accepted.\n\t     * If an empty query string is provided all indexed uids will be returned.\n\t     *\n\t     * Document searches are case-insensitive (e.g. \"search\" will match \"Search\").\n\t     * Document searches use substring matching (e.g. \"na\" and \"me\" will both match \"name\").\n\t     *\n\t     * @param query Searchable query text\n\t     * @return Array of uids\n\t     */\n\t\n\t  }, {\n\t    key: 'search',\n\t    value: function search(query) {\n\t      function _ref2(_id2) {\n\t        if (!Array.isArray(_id2)) {\n\t          throw new TypeError('Function return value violates contract.\\n\\nExpected:\\nArray<any>\\n\\nGot:\\n' + _inspect(_id2));\n\t        }\n\t\n\t        return _id2;\n\t      }\n\t\n\t      if (!(typeof query === 'string')) {\n\t        throw new TypeError('Value of argument \"query\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(query));\n\t      }\n\t\n\t      if (!query) {\n\t        return _ref2(Object.keys(this.uids));\n\t      } else {\n\t        var tokens = this._tokenize(this._sanitize(query));\n\t\n\t        if (!(Array.isArray(tokens) && tokens.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Value of variable \"tokens\" violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n' + _inspect(tokens));\n\t        }\n\t\n\t        return _ref2(this.searchIndex.search(tokens));\n\t      }\n\t    }\n\t\n\t    /**\n\t     * Index strategy based on 'all-substrings-index-strategy.ts' in github.com/bvaughn/js-search/\n\t     *\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_expandToken',\n\t    value: function _expandToken(token) {\n\t      function _ref3(_id3) {\n\t        if (!(Array.isArray(_id3) && _id3.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Function return value violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n' + _inspect(_id3));\n\t        }\n\t\n\t        return _id3;\n\t      }\n\t\n\t      if (!(typeof token === 'string')) {\n\t        throw new TypeError('Value of argument \"token\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(token));\n\t      }\n\t\n\t      var expandedTokens = [];\n\t\n\t      // String.prototype.charAt() may return surrogate halves instead of whole characters.\n\t      // When this happens in the context of a web-worker it can cause Chrome to crash.\n\t      // Catching the error is a simple solution for now; in the future I may try to better support non-BMP characters.\n\t      // Resources:\n\t      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/charAt\n\t      // https://mathiasbynens.be/notes/javascript-unicode\n\t      try {\n\t        for (var i = 0, length = token.length; i < length; ++i) {\n\t          var prefixString = '';\n\t\n\t          for (var j = i; j < length; ++j) {\n\t            prefixString += token.charAt(j);\n\t\n\t            if (!(typeof prefixString === 'string')) {\n\t              throw new TypeError('Value of variable \"prefixString\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(prefixString));\n\t            }\n\t\n\t            expandedTokens.push(prefixString);\n\t          }\n\t        }\n\t      } catch (error) {\n\t        console.error('Unable to parse token \"' + token + '\" ' + error);\n\t      }\n\t\n\t      return _ref3(expandedTokens);\n\t    }\n\t\n\t    /**\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_sanitize',\n\t    value: function _sanitize(string) {\n\t      function _ref4(_id4) {\n\t        if (!(typeof _id4 === 'string')) {\n\t          throw new TypeError('Function return value violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(_id4));\n\t        }\n\t\n\t        return _id4;\n\t      }\n\t\n\t      if (!(typeof string === 'string')) {\n\t        throw new TypeError('Value of argument \"string\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(string));\n\t      }\n\t\n\t      return _ref4(string.trim().toLocaleLowerCase());\n\t    }\n\t\n\t    /**\n\t     * @private\n\t     */\n\t\n\t  }, {\n\t    key: '_tokenize',\n\t    value: function _tokenize(text) {\n\t      function _ref5(_id5) {\n\t        if (!(Array.isArray(_id5) && _id5.every(function (item) {\n\t          return typeof item === 'string';\n\t        }))) {\n\t          throw new TypeError('Function return value violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n' + _inspect(_id5));\n\t        }\n\t\n\t        return _id5;\n\t      }\n\t\n\t      if (!(typeof text === 'string')) {\n\t        throw new TypeError('Value of argument \"text\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n' + _inspect(text));\n\t      }\n\t\n\t      return _ref5(text.split(/\\s+/).filter(function (text) {\n\t        return text;\n\t      })); // Remove empty tokens\n\t    }\n\t  }]);\n\t\n\t  return SearchUtility;\n\t}();\n\t\n\texports.default = SearchUtility;\n\t\n\tfunction _inspect(input) {\n\t  if (input === null) {\n\t    return 'null';\n\t  } else if (input === undefined) {\n\t    return 'void';\n\t  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {\n\t    return typeof input === 'undefined' ? 'undefined' : _typeof(input);\n\t  } else if (Array.isArray(input)) {\n\t    if (input.length > 0) {\n\t      var first = _inspect(input[0]);\n\n\t      if (input.every(function (item) {\n\t        return _inspect(item) === first;\n\t      })) {\n\t        return first.trim() + '[]';\n\t      } else {\n\t        return '[' + input.map(_inspect).join(', ') + ']';\n\t      }\n\t    } else {\n\t      return 'Array';\n\t    }\n\t  } else {\n\t    var keys = Object.keys(input);\n\n\t    if (!keys.length) {\n\t      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {\n\t        return input.constructor.name;\n\t      } else {\n\t        return 'Object';\n\t      }\n\t    }\n\n\t    var entries = keys.map(function (key) {\n\t      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';\n\t    }).join('\\n  ');\n\n\t    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {\n\t      return input.constructor.name + ' {\\n  ' + entries + '\\n}';\n\t    } else {\n\t      return '{ ' + entries + '\\n}';\n\t    }\n\t  }\n\t}\n\n/***/ },\n/* 3 */\n/***/ function(module, exports) {\n\n\t\"use strict\";\n\t\n\tvar _typeof = typeof Symbol === \"function\" && typeof Symbol.iterator === \"symbol\" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === \"function\" && obj.constructor === Symbol ? \"symbol\" : typeof obj; };\n\t\n\tvar _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();\n\t\n\tObject.defineProperty(exports, \"__esModule\", {\n\t  value: true\n\t});\n\t\n\tfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\t\n\t/**\n\t * Maps search tokens to uids.\n\t * This structure is used by the Search class to optimize search operations.\n\t * Forked from JS search (github.com/bvaughn/js-search).\n\t */\n\t\n\tvar SearchIndex = function () {\n\t  function SearchIndex() {\n\t    _classCallCheck(this, SearchIndex);\n\t\n\t    this.tokenToUidMap = {};\n\t  }\n\t\n\t  /**\n\t   * Maps the specified token to a uid.\n\t   *\n\t   * @param token Searchable token (e.g. \"road\")\n\t   * @param uid Identifies a document within the searchable corpus\n\t   */\n\t\n\t  _createClass(SearchIndex, [{\n\t    key: \"indexDocument\",\n\t    value: function indexDocument(token, uid) {\n\t      if (!(typeof token === 'string')) {\n\t        throw new TypeError(\"Value of argument \\\"token\\\" violates contract.\\n\\nExpected:\\nstring\\n\\nGot:\\n\" + _inspect(token));\n\t      }\n\t\n\t      if (!this.tokenToUidMap[token]) {\n\t        this.tokenToUidMap[token] = {};\n\t      }\n\t\n\t      this.tokenToUidMap[token][uid] = uid;\n\t    }\n\t\n\t    /**\n\t     * Finds uids that have been mapped to the set of tokens specified.\n\t     * Only uids that have been mapped to all tokens will be returned.\n\t     *\n\t     * @param tokens Array of searchable tokens (e.g. [\"long\", \"road\"])\n\t     * @return Array of uids that have been associated with the set of search tokens\n\t     */\n\t\n\t  }, {\n\t    key: \"search\",\n\t    value: function search(tokens) {\n\t      var _this = this;\n\t\n\t      function _ref2(_id2) {\n\t        if (!Array.isArray(_id2)) {\n\t          throw new TypeError(\"Function return value violates contract.\\n\\nExpected:\\nArray<any>\\n\\nGot:\\n\" + _inspect(_id2));\n\t        }\n\t\n\t        return _id2;\n\t      }\n\t\n\t      if (!(Array.isArray(tokens) && tokens.every(function (item) {\n\t        return typeof item === 'string';\n\t      }))) {\n\t        throw new TypeError(\"Value of argument \\\"tokens\\\" violates contract.\\n\\nExpected:\\nArray<string>\\n\\nGot:\\n\" + _inspect(tokens));\n\t      }\n\t\n\t      var uidMap = {};\n\t\n\t      if (!(uidMap != null && (typeof uidMap === \"undefined\" ? \"undefined\" : _typeof(uidMap)) === 'object')) {\n\t        throw new TypeError(\"Value of variable \\\"uidMap\\\" violates contract.\\n\\nExpected:\\n{ [uid: any]: any\\n}\\n\\nGot:\\n\" + _inspect(uidMap));\n\t      }\n\t\n\t      var initialized = false;\n\t\n\t      tokens.forEach(function (token) {\n\t        var currentUidMap = _this.tokenToUidMap[token] || {};\n\t\n\t        if (!(currentUidMap != null && (typeof currentUidMap === \"undefined\" ? \"undefined\" : _typeof(currentUidMap)) === 'object')) {\n\t          throw new TypeError(\"Value of variable \\\"currentUidMap\\\" violates contract.\\n\\nExpected:\\n{ [uid: any]: any\\n}\\n\\nGot:\\n\" + _inspect(currentUidMap));\n\t        }\n\t\n\t        if (!initialized) {\n\t          initialized = true;\n\t\n\t          for (var _uid in currentUidMap) {\n\t            uidMap[_uid] = currentUidMap[_uid];\n\t          }\n\t        } else {\n\t          for (var _uid2 in uidMap) {\n\t            if (!currentUidMap[_uid2]) {\n\t              delete uidMap[_uid2];\n\t            }\n\t          }\n\t        }\n\t      });\n\t\n\t      var uids = [];\n\t\n\t      if (!Array.isArray(uids)) {\n\t        throw new TypeError(\"Value of variable \\\"uids\\\" violates contract.\\n\\nExpected:\\nArray<any>\\n\\nGot:\\n\" + _inspect(uids));\n\t      }\n\t\n\t      for (var _uid3 in uidMap) {\n\t        uids.push(uidMap[_uid3]);\n\t      }\n\t\n\t      return _ref2(uids);\n\t    }\n\t  }]);\n\t\n\t  return SearchIndex;\n\t}();\n\t\n\texports.default = SearchIndex;\n\t\n\tfunction _inspect(input) {\n\t  if (input === null) {\n\t    return 'null';\n\t  } else if (input === undefined) {\n\t    return 'void';\n\t  } else if (typeof input === 'string' || typeof input === 'number' || typeof input === 'boolean') {\n\t    return typeof input === \"undefined\" ? \"undefined\" : _typeof(input);\n\t  } else if (Array.isArray(input)) {\n\t    if (input.length > 0) {\n\t      var first = _inspect(input[0]);\n\n\t      if (input.every(function (item) {\n\t        return _inspect(item) === first;\n\t      })) {\n\t        return first.trim() + '[]';\n\t      } else {\n\t        return '[' + input.map(_inspect).join(', ') + ']';\n\t      }\n\t    } else {\n\t      return 'Array';\n\t    }\n\t  } else {\n\t    var keys = Object.keys(input);\n\n\t    if (!keys.length) {\n\t      if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {\n\t        return input.constructor.name;\n\t      } else {\n\t        return 'Object';\n\t      }\n\t    }\n\n\t    var entries = keys.map(function (key) {\n\t      return (/^([A-Z_$][A-Z0-9_$]*)$/i.test(key) ? key : JSON.stringify(key)) + ': ' + _inspect(input[key]) + ';';\n\t    }).join('\\n  ');\n\n\t    if (input.constructor && input.constructor.name && input.constructor.name !== 'Object') {\n\t      return input.constructor.name + ' {\\n  ' + entries + '\\n}';\n\t    } else {\n\t      return '{ ' + entries + '\\n}';\n\t    }\n\t  }\n\t}\n\n/***/ }\n/******/ ]);\n//# sourceMappingURL=0c0d513cb6382ae030e3.worker.js.map", __webpack_require__.p + "0c0d513cb6382ae030e3.worker.js");
 		};
 	
 	/***/ },
@@ -2397,7 +2867,7 @@ module.exports =
 	//# sourceMappingURL=js-worker-search.js.map
 
 /***/ },
-/* 19 */
+/* 23 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';

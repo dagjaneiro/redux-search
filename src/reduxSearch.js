@@ -59,7 +59,7 @@ export default function reduxSearch ({
 
       store.subscribe(() => {
         const nextState = store.getState()
-        const searchState = store[SEARCH_STATE_SELECTOR](nextState)
+        // const searchState = store[SEARCH_STATE_SELECTOR](nextState)
 
         for (let resourceName in resourceIndexes) {
           const resource = resourceSelector(resourceName, nextState)
@@ -69,7 +69,7 @@ export default function reduxSearch ({
             currentResources[resourceName] = resource
 
             const resourceIndex = resourceIndexes[resourceName]
-            const searchString = searchState[resourceName].text
+            // const searchString = searchState[resourceName].text
 
             store.dispatch(actions.indexResource({
               fieldNamesOrIndexFunction: resourceIndex,
@@ -77,7 +77,7 @@ export default function reduxSearch ({
               resources: resource,
               state: nextState
             }))
-            store.dispatch(actions.search(resourceName)(searchString))
+            // store.dispatch(actions.search(resourceName)(searchString))
           }
         }
       })
